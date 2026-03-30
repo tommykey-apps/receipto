@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+web/build/
+web/.svelte-kit/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate*
+infra/.terraform.lock.hcl
+infra/lambda_placeholder.zip
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Flox
+.flox/log/
+.flox/run/
+.flox/cache/
+terraform.tfvars
