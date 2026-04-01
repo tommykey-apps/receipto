@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatCurrency, formatDate } from '$lib/utils';
+	import { formatCurrency, formatDate, categoryIcon } from '$lib/utils';
 	import CategoryBadge from './CategoryBadge.svelte';
 
 	interface Props {
@@ -7,10 +7,10 @@
 			id: string;
 			store_name: string;
 			amount: number;
-			date: string;
-			category_id: string;
-			category_name?: string;
-			category_icon?: string;
+			category: string;
+			created_at: string;
+			memo?: string;
+			receipt_id?: string | null;
 		};
 		onclick?: () => void;
 	}
@@ -23,10 +23,10 @@
 	class="flex w-full items-center gap-3 rounded-2xl glass p-4 text-left card-hover"
 	{onclick}
 >
-	<CategoryBadge icon={expense.category_icon} name={expense.category_name} />
+	<CategoryBadge icon={categoryIcon(expense.category)} name={expense.category} />
 	<div class="flex-1 min-w-0">
 		<p class="truncate font-medium text-fluid-sm">{expense.store_name}</p>
-		<p class="text-fluid-xs text-muted-foreground">{formatDate(expense.date)}</p>
+		<p class="text-fluid-xs text-muted-foreground">{formatDate(expense.created_at)}</p>
 	</div>
 	<span class="amount text-fluid-sm">
 		{formatCurrency(expense.amount)}

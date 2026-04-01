@@ -19,8 +19,7 @@
 	let editForm = $state({
 		store_name: '',
 		amount: 0,
-		date: new Date().toISOString().split('T')[0],
-		category_id: '',
+		category: '',
 		memo: ''
 	});
 
@@ -87,8 +86,7 @@
 					editForm = {
 						store_name: receipt.store_name ?? '',
 						amount: receipt.amount ?? 0,
-						date: receipt.date ?? new Date().toISOString().split('T')[0],
-						category_id: receipt.category_id ?? '',
+						category: receipt.category ?? '',
 						memo: ''
 					};
 					processing = false;
@@ -155,18 +153,14 @@
 					<Input type="number" bind:value={editForm.amount} min={1} class="rounded-xl amount" required />
 				</div>
 				<div class="space-y-1.5">
-					<label class="text-fluid-xs text-muted-foreground font-medium block">日付</label>
-					<Input type="date" bind:value={editForm.date} class="rounded-xl" required />
-				</div>
-				<div class="space-y-1.5">
 					<label class="text-fluid-xs text-muted-foreground font-medium block">カテゴリ</label>
-					<Select type="single" bind:value={editForm.category_id}>
+					<Select type="single" bind:value={editForm.category}>
 						<SelectTrigger class="rounded-xl">
-							<span class="text-muted-foreground">{categories.find(c => c.id === editForm.category_id)?.name ?? 'カテゴリを選択'}</span>
+							<span class="text-muted-foreground">{categories.find(c => c.name === editForm.category)?.display_name ?? 'カテゴリを選択'}</span>
 						</SelectTrigger>
 						<SelectContent class="glass rounded-xl border-glass-border">
 							{#each categories as cat}
-								<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
+								<SelectItem value={cat.name}>{cat.icon ?? '📦'} {cat.display_name}</SelectItem>
 							{/each}
 						</SelectContent>
 					</Select>
