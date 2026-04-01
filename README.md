@@ -1,4 +1,4 @@
-# Expense Tracker
+# Receipto
 
 レシートを撮影するだけで支出を自動記録する家計簿アプリ。OCRで金額・店名を読み取り、カテゴリ自動分類、予算アラート、週次ダイジェストメールまで対応。
 
@@ -58,7 +58,7 @@
 ## ディレクトリ構成
 
 ```
-expense-tracker/
+receipto/
 ├── api/          # Python FastAPI (Lambda対応、Mangumでデュアルモード)
 ├── functions/    # Step Functions用Lambda (OCR, 分類, 通知等)
 ├── web/          # SvelteKit フロント（shadcn-svelte new-york）

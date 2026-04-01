@@ -1,4 +1,4 @@
-# Expense Tracker
+# Receipto
 
 レシートOCR + 支出管理 + 予算アラートの家計簿アプリ。AWSポートフォリオ第3弾。
 
