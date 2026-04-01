@@ -32,6 +32,13 @@
       },
       "terraform": {
         "pkg-path": "terraform"
+      },
+      "xvfb-run": {
+        "pkg-path": "xvfb-run",
+        "systems": [
+          "x86_64-linux",
+          "aarch64-linux"
+        ]
       }
     },
     "hook": {},
@@ -1217,6 +1224,64 @@
       ],
       "outputs": {
         "out": "/nix/store/b5vw87jqlrzimhfi0182i470dvizmn7i-terraform-1.14.6"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xvfb-run",
+      "broken": false,
+      "derivation": "/nix/store/2xgr2z8gxbw8rban05zq9q4yj1mpj3sq-xvfb-run-1+g87f6705.drv",
+      "description": "Convenience script to run a virtualized X-Server",
+      "install_id": "xvfb-run",
+      "license": "GPL-2.0-only",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=8110df5ad7abf5d4c0f6fb0f8f978390e77f9685",
+      "name": "xvfb-run-1+g87f6705",
+      "pname": "xvfb-run",
+      "rev": "8110df5ad7abf5d4c0f6fb0f8f978390e77f9685",
+      "rev_count": 971119,
+      "rev_date": "2026-03-28T14:48:23Z",
+      "scrape_date": "2026-03-30T04:13:35.558737Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1+g87f6705",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/48k1ldazzz8f4msif0wjz5bj2nh7qfgz-xvfb-run-1+g87f6705"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "xvfb-run",
+      "broken": false,
+      "derivation": "/nix/store/n7mr658312rijdaxy476zwa9q5dvbb8n-xvfb-run-1+g87f6705.drv",
+      "description": "Convenience script to run a virtualized X-Server",
+      "install_id": "xvfb-run",
+      "license": "GPL-2.0-only",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=8110df5ad7abf5d4c0f6fb0f8f978390e77f9685",
+      "name": "xvfb-run-1+g87f6705",
+      "pname": "xvfb-run",
+      "rev": "8110df5ad7abf5d4c0f6fb0f8f978390e77f9685",
+      "rev_count": 971119,
+      "rev_date": "2026-03-28T14:48:23Z",
+      "scrape_date": "2026-03-30T05:20:04.828422Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1+g87f6705",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/sbzdw6r5mw722sm93lr86qq07vpm28xj-xvfb-run-1+g87f6705"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
