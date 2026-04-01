@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Plus } from 'lucide-svelte';
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '$lib/components/ui/dialog';
@@ -75,55 +74,72 @@
 	let editingExpense = $state<any>(null);
 </script>
 
-<div class="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-bold">支出一覧</h1>
+<div class="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+	<!-- Page header -->
+	<div class="flex items-center justify-between animate-fade-up">
+		<h1 class="text-fluid-xl font-bold tracking-tight">支出一覧</h1>
 		<Dialog bind:open={dialogOpen}>
 			<DialogTrigger>
 				{#snippet child({ props })}
-					<Button {...props} class="rounded-lg gap-2">
+					<Button {...props} class="rounded-xl gap-2 shadow-sm">
 						<Plus class="h-4 w-4" />
-						追加
+						<span class="text-fluid-sm">追加</span>
 					</Button>
 				{/snippet}
 			</DialogTrigger>
-			<DialogContent>
+			<DialogContent class="glass rounded-2xl border-glass-border">
 				<DialogHeader>
-					<DialogTitle>支出を追加</DialogTitle>
+					<DialogTitle class="text-fluid-lg font-bold tracking-tight">支出を追加</DialogTitle>
 				</DialogHeader>
 				<form onsubmit={handleCreate} class="space-y-4">
-					<Input placeholder="店名" bind:value={newExpense.store_name} required />
-					<Input type="number" placeholder="金額" bind:value={newExpense.amount} min={1} required />
-					<Input type="date" bind:value={newExpense.date} required />
-					<Select type="single" bind:value={newExpense.category_id}>
-						<SelectTrigger>
-							<span class="text-muted-foreground">{categories.find(c => c.id === newExpense.category_id)?.name ?? 'カテゴリを選択'}</span>
-						</SelectTrigger>
-						<SelectContent>
-							{#each categories as cat}
-								<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
-							{/each}
-						</SelectContent>
-					</Select>
-					<Input placeholder="メモ (任意)" bind:value={newExpense.memo} />
-					<Button type="submit" class="w-full rounded-lg">追加する</Button>
+					<div class="space-y-1.5">
+						<label class="text-fluid-xs text-muted-foreground font-medium">店名</label>
+						<Input placeholder="店名を入力" bind:value={newExpense.store_name} class="rounded-xl" required />
+					</div>
+					<div class="space-y-1.5">
+						<label class="text-fluid-xs text-muted-foreground font-medium">金額</label>
+						<Input type="number" placeholder="0" bind:value={newExpense.amount} min={1} class="rounded-xl amount" required />
+					</div>
+					<div class="space-y-1.5">
+						<label class="text-fluid-xs text-muted-foreground font-medium">日付</label>
+						<Input type="date" bind:value={newExpense.date} class="rounded-xl" required />
+					</div>
+					<div class="space-y-1.5">
+						<label class="text-fluid-xs text-muted-foreground font-medium">カテゴリ</label>
+						<Select type="single" bind:value={newExpense.category_id}>
+							<SelectTrigger class="rounded-xl">
+								<span class="text-muted-foreground">{categories.find(c => c.id === newExpense.category_id)?.name ?? 'カテゴリを選択'}</span>
+							</SelectTrigger>
+							<SelectContent class="glass rounded-xl border-glass-border">
+								{#each categories as cat}
+									<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
+								{/each}
+							</SelectContent>
+						</Select>
+					</div>
+					<div class="space-y-1.5">
+						<label class="text-fluid-xs text-muted-foreground font-medium">メモ</label>
+						<Input placeholder="任意" bind:value={newExpense.memo} class="rounded-xl" />
+					</div>
+					<Button type="submit" class="w-full rounded-xl text-fluid-sm font-semibold mt-2">追加する</Button>
 				</form>
 			</DialogContent>
 		</Dialog>
 	</div>
 
-	<div class="flex gap-2">
+	<!-- Filter bar -->
+	<div class="glass rounded-2xl p-3 flex items-center gap-3 animate-fade-up" style="animation-delay: 80ms;">
 		<Input
 			type="month"
 			bind:value={selectedMonth}
 			onchange={handleMonthChange}
-			class="w-40"
+			class="w-40 rounded-xl bg-transparent border-glass-border"
 		/>
 		<Select type="single" bind:value={selectedCategory} onValueChange={handleCategoryChange}>
-			<SelectTrigger class="w-40">
-				<span class="text-muted-foreground">{categories.find(c => c.id === selectedCategory)?.name ?? '全カテゴリ'}</span>
+			<SelectTrigger class="w-40 rounded-xl bg-transparent border-glass-border">
+				<span class="text-fluid-xs text-muted-foreground">{categories.find(c => c.id === selectedCategory)?.name ?? '全カテゴリ'}</span>
 			</SelectTrigger>
-			<SelectContent>
+			<SelectContent class="glass rounded-xl border-glass-border">
 				<SelectItem value="">すべて</SelectItem>
 				{#each categories as cat}
 					<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
@@ -132,18 +148,32 @@
 		</Select>
 	</div>
 
+	<!-- Content area -->
 	{#if loading}
-		<div class="flex items-center justify-center py-12">
-			<p class="text-muted-foreground">読み込み中...</p>
+		<div class="space-y-3">
+			{#each Array(5) as _}
+				<div class="glass rounded-2xl p-4 flex items-center gap-3">
+					<div class="skeleton h-10 w-10 rounded-xl shrink-0"></div>
+					<div class="flex-1 space-y-2">
+						<div class="skeleton h-4 w-2/3 rounded-lg"></div>
+						<div class="skeleton h-3 w-1/3 rounded-lg"></div>
+					</div>
+					<div class="skeleton h-5 w-20 rounded-lg"></div>
+				</div>
+			{/each}
 		</div>
 	{:else if expenses.length === 0}
-		<Card class="rounded-xl">
-			<CardContent class="py-12 text-center">
-				<p class="text-muted-foreground">支出がありません</p>
-			</CardContent>
-		</Card>
+		<div class="glass rounded-2xl py-16 text-center animate-fade-up">
+			<div class="flex justify-center items-center gap-3 mb-6 opacity-30">
+				<div class="text-5xl -rotate-12">🧾</div>
+				<div class="text-4xl rotate-6 translate-y-2">💸</div>
+				<div class="text-5xl -rotate-6">📝</div>
+			</div>
+			<p class="text-fluid-base font-medium text-muted-foreground mb-1">支出がありません</p>
+			<p class="text-fluid-xs text-muted-foreground/60">右上の「追加」ボタンから支出を記録しましょう</p>
+		</div>
 	{:else}
-		<div class="space-y-2">
+		<div class="space-y-2 stagger">
 			{#each expenses as expense}
 				<ExpenseCard {expense} />
 			{/each}

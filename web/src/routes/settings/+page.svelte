@@ -47,72 +47,102 @@
 	}
 </script>
 
-<div class="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
-	<h1 class="text-2xl font-bold">設定</h1>
+<div class="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+	<!-- Page header -->
+	<h1 class="text-fluid-xl font-bold tracking-tight animate-fade-up">設定</h1>
 
-	<Card class="rounded-xl">
-		<CardHeader>
-			<CardTitle class="text-base">プロフィール</CardTitle>
-		</CardHeader>
-		<CardContent>
-			<p class="text-sm text-muted-foreground">メールアドレス</p>
-			<p class="font-medium">{auth.user?.email ?? '-'}</p>
-		</CardContent>
-	</Card>
-
-	<Card class="rounded-xl">
-		<CardHeader>
-			<CardTitle class="text-base">カテゴリ管理</CardTitle>
-		</CardHeader>
-		<CardContent class="space-y-3">
-			{#each categories as cat}
-				<div class="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-					<div class="flex items-center gap-2">
-						<span>{cat.icon ?? '📦'}</span>
-						<span class="text-sm">{cat.name}</span>
-					</div>
+	<div class="stagger space-y-6">
+		<!-- Profile section -->
+		<div class="glass rounded-2xl p-6">
+			<div class="flex items-center gap-4">
+				<!-- Avatar circle -->
+				<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary/15 text-primary text-fluid-lg font-bold shrink-0">
+					{(auth.user?.email ?? '?')[0].toUpperCase()}
 				</div>
-			{/each}
+				<div class="min-w-0">
+					<p class="text-fluid-xs text-muted-foreground mb-0.5">メールアドレス</p>
+					<p class="text-fluid-base font-medium truncate">{auth.user?.email ?? '-'}</p>
+				</div>
+			</div>
+		</div>
 
-			<Separator />
+		<!-- Category management -->
+		<div class="glass rounded-2xl p-6">
+			<h2 class="text-fluid-base font-semibold tracking-tight mb-4">カテゴリ管理</h2>
 
-			<div class="flex gap-2">
+			<!-- Category pills -->
+			<div class="flex flex-wrap gap-2 mb-5">
+				{#each categories as cat}
+					<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 text-fluid-sm card-hover cursor-default">
+						<span>{cat.icon ?? '📦'}</span>
+						<span>{cat.name}</span>
+					</span>
+				{/each}
+				{#if categories.length === 0}
+					<p class="text-fluid-sm text-muted-foreground">カテゴリがありません</p>
+				{/if}
+			</div>
+
+			<!-- Inline add form -->
+			<div class="flex items-center gap-2 pt-4 border-t border-glass-border">
 				<Input
-					placeholder="アイコン"
+					placeholder="🏷"
 					bind:value={newCategoryIcon}
-					class="w-16 text-center"
+					class="w-14 text-center rounded-xl bg-muted/30 border-transparent focus:border-primary/30"
 				/>
 				<Input
 					placeholder="カテゴリ名"
 					bind:value={newCategoryName}
-					class="flex-1"
+					class="flex-1 rounded-xl bg-muted/30 border-transparent focus:border-primary/30"
 				/>
-				<Button variant="outline" size="icon" class="rounded-lg" onclick={handleAddCategory}>
+				<button
+					onclick={handleAddCategory}
+					class="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/15 text-primary hover:bg-primary/25 active:scale-[0.95] transition-all shrink-0"
+				>
 					<Plus class="h-4 w-4" />
-				</Button>
+				</button>
 			</div>
-		</CardContent>
-	</Card>
+		</div>
 
-	<Card class="rounded-xl">
-		<CardHeader>
-			<CardTitle class="text-base">テーマ</CardTitle>
-		</CardHeader>
-		<CardContent>
-			<Button variant="outline" class="w-full rounded-lg gap-2" onclick={toggleTheme}>
-				{#if isDark}
-					<Sun class="h-4 w-4" />
-					ライトモードに切替
-				{:else}
-					<Moon class="h-4 w-4" />
-					ダークモードに切替
-				{/if}
-			</Button>
-		</CardContent>
-	</Card>
+		<!-- Theme toggle -->
+		<div class="glass rounded-2xl p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<h2 class="text-fluid-base font-semibold tracking-tight">テーマ</h2>
+					<p class="text-fluid-xs text-muted-foreground mt-0.5">
+						{isDark ? 'ダークモード' : 'ライトモード'}
+					</p>
+				</div>
+				<!-- Toggle switch -->
+				<button
+					onclick={toggleTheme}
+					class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					style="background: {isDark ? 'oklch(0.35 0.06 260)' : 'oklch(0.85 0.10 85)'};"
+					aria-label="テーマ切替"
+				>
+					<span
+						class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-300"
+						style="transform: translateX({isDark ? '1.625rem' : '0.25rem'});"
+					>
+						{#if isDark}
+							<Moon class="h-3.5 w-3.5 text-indigo-500" />
+						{:else}
+							<Sun class="h-3.5 w-3.5 text-amber-500" />
+						{/if}
+					</span>
+				</button>
+			</div>
+		</div>
 
-	<Button variant="destructive" class="w-full rounded-lg gap-2" onclick={logout}>
-		<LogOut class="h-4 w-4" />
-		ログアウト
-	</Button>
+		<!-- Logout -->
+		<div class="pt-4">
+			<button
+				onclick={logout}
+				class="flex items-center gap-2 mx-auto text-fluid-sm text-muted-foreground hover:text-foreground transition-colors"
+			>
+				<LogOut class="h-4 w-4" />
+				<span>ログアウト</span>
+			</button>
+		</div>
+	</div>
 </div>

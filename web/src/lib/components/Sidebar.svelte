@@ -12,35 +12,35 @@
 	];
 </script>
 
-<aside class="hidden md:flex md:w-60 md:flex-col md:border-r md:border-border bg-sidebar min-h-screen">
-	<div class="flex items-center gap-2 px-6 py-5 border-b border-border">
-		<div class="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-			¥
+<aside class="hidden md:flex md:w-56 md:flex-col glass border-r-0 min-h-svh border-r border-glass-border">
+	<div class="flex items-center gap-2.5 px-5 py-5">
+		<div class="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm shadow-sm shadow-primary/20">
+			R
 		</div>
-		<span class="text-lg font-semibold text-sidebar-foreground">家計簿</span>
+		<span class="text-sm font-semibold tracking-tight">Receipto</span>
 	</div>
 
-	<nav class="flex-1 px-3 py-4 space-y-1">
+	<nav class="flex-1 px-3 py-2 space-y-0.5">
 		{#each items as item}
 			{@const active = page.url.pathname.startsWith(item.href)}
 			<a
 				href={item.href}
-				class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors {active
+				class="group flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all {active
 					? 'bg-primary/10 text-primary'
-					: 'text-sidebar-foreground hover:bg-sidebar-accent'}"
+					: 'text-muted-foreground hover:text-foreground hover:bg-muted'}"
 			>
-				<item.icon class="h-5 w-5" />
+				<item.icon class="h-[18px] w-[18px] transition-transform group-hover:scale-105" strokeWidth={active ? 2.5 : 1.5} />
 				{item.label}
 			</a>
 		{/each}
 	</nav>
 
-	<div class="border-t border-border px-3 py-4">
+	<div class="border-t border-border/50 px-3 py-3">
 		<button
 			onclick={logout}
-			class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent transition-colors"
+			class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
 		>
-			<LogOut class="h-5 w-5" />
+			<LogOut class="h-[18px] w-[18px]" strokeWidth={1.5} />
 			ログアウト
 		</button>
 	</div>

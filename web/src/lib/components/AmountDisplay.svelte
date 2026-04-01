@@ -3,23 +3,24 @@
 
 	interface Props {
 		amount: number;
-		size?: 'sm' | 'md' | 'lg' | 'xl';
+		size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero';
 		class?: string;
+		animate?: boolean;
 	}
 
-	let { amount, size = 'md', class: className = '' }: Props = $props();
+	let { amount, size = 'md', class: className = '', animate = false }: Props = $props();
 
 	const sizeClasses = {
 		sm: 'text-lg',
 		md: 'text-2xl',
-		lg: 'text-3xl',
-		xl: 'text-4xl'
+		lg: 'text-fluid-xl',
+		xl: 'text-fluid-2xl',
+		hero: 'text-fluid-3xl'
 	};
 </script>
 
 <span
-	class="font-semibold tabular-nums tracking-tight {sizeClasses[size]} {className}"
-	style="font-feature-settings: 'tnum' 1"
+	class="amount {sizeClasses[size]} {animate ? 'animate-count-up' : ''} {className}"
 >
 	{formatCurrency(amount)}
 </span>

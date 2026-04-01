@@ -78,77 +78,151 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center p-4">
-	<Card class="w-full max-w-sm">
-		<CardHeader class="text-center">
-			<div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground">
-				¥
-			</div>
-			<CardTitle class="text-xl">家計簿</CardTitle>
-			<CardDescription>レシート撮影で簡単支出管理</CardDescription>
-		</CardHeader>
-		<CardContent>
-			{#if import.meta.env.DEV}
-				<div class="mb-4 rounded-lg bg-primary/10 p-2 text-center text-xs text-primary">
-					DEVモード — そのままログインできます
+<div class="flex min-h-screen flex-col md:flex-row">
+	<!-- Brand side (left on desktop, top on mobile) -->
+	<div
+		class="relative flex flex-col items-center justify-center overflow-hidden px-8 py-12
+			md:w-1/2 md:py-0"
+		style="background: linear-gradient(145deg, oklch(0.18 0.04 265), oklch(0.13 0.008 60))"
+	>
+		<div class="relative z-10 text-center md:text-left animate-fade-up">
+			<!-- Logo -->
+			<div class="mb-6 flex items-center gap-3 justify-center md:justify-start">
+				<div
+					class="flex h-12 w-12 items-center justify-center rounded-xl text-xl font-bold text-white"
+					style="background: linear-gradient(135deg, oklch(0.60 0.14 265), oklch(0.45 0.12 280))"
+				>
+					R
 				</div>
-			{/if}
+				<span class="text-fluid-xl font-semibold tracking-tight text-white">Receipto</span>
+			</div>
 
-			{#if error}
-				<Alert variant="destructive" class="mb-4">
-					<AlertDescription>{error}</AlertDescription>
-				</Alert>
-			{/if}
+			<p class="text-fluid-base text-white/70 max-w-xs">
+				レシートを撮るだけ。<br />
+				家計をスマートに管理。
+			</p>
+		</div>
+	</div>
 
-			{#if showConfirm}
-				<form onsubmit={handleConfirm} class="space-y-4">
-					<p class="text-sm text-muted-foreground">
-						{email} に確認コードを送信しました
-					</p>
-					<Input
-						type="text"
-						placeholder="確認コード"
-						bind:value={confirmCode}
-						required
-					/>
-					<Button type="submit" class="w-full rounded-lg" disabled={isLoading}>
-						{isLoading ? '確認中...' : '確認'}
-					</Button>
-				</form>
-			{:else}
-				<Tabs bind:value={activeTab}>
-					<TabsList class="grid w-full grid-cols-2">
-						<TabsTrigger value="login">ログイン</TabsTrigger>
-						<TabsTrigger value="signup">新規登録</TabsTrigger>
-					</TabsList>
+	<!-- Form side (right on desktop, bottom on mobile) -->
+	<div class="flex flex-1 items-center justify-center p-6 md:p-12">
+		<div class="w-full max-w-sm animate-fade-up" style="animation-delay: 100ms">
+			<div class="glass rounded-2xl p-8">
+				<!-- Mobile-only compact logo -->
+				<div class="mb-6 md:hidden flex items-center gap-2 justify-center">
+					<div
+						class="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white"
+						style="background: linear-gradient(135deg, oklch(0.60 0.14 265), oklch(0.45 0.12 280))"
+					>
+						R
+					</div>
+					<span class="text-fluid-base font-semibold">Receipto</span>
+				</div>
 
-					<TabsContent value="login">
-						<form onsubmit={handleLogin} class="space-y-4 pt-4">
-							<Input type="email" placeholder="メールアドレス" bind:value={email} required />
-							<Input type="password" placeholder="パスワード" bind:value={password} required />
-							<Button type="submit" class="w-full rounded-lg" disabled={isLoading}>
-								{isLoading ? 'ログイン中...' : 'ログイン'}
-							</Button>
-						</form>
-					</TabsContent>
+				<div class="mb-6 hidden md:block">
+					<h2 class="text-fluid-lg font-semibold tracking-tight">おかえりなさい</h2>
+					<p class="text-fluid-xs text-muted-foreground mt-1">アカウントにログインしてください</p>
+				</div>
 
-					<TabsContent value="signup">
-						<form onsubmit={handleSignUp} class="space-y-4 pt-4">
-							<Input type="email" placeholder="メールアドレス" bind:value={email} required />
-							<Input
-								type="password"
-								placeholder="パスワード (8文字以上)"
-								bind:value={password}
-								minlength={8}
-								required
-							/>
-							<Button type="submit" class="w-full rounded-lg" disabled={isLoading}>
-								{isLoading ? '登録中...' : 'アカウント作成'}
-							</Button>
-						</form>
-					</TabsContent>
-				</Tabs>
-			{/if}
-		</CardContent>
-	</Card>
+				{#if import.meta.env.DEV}
+					<div class="mb-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+						<span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
+						DEVモード
+					</div>
+				{/if}
+
+				{#if error}
+					<Alert variant="destructive" class="mb-4 rounded-xl">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+				{/if}
+
+				{#if showConfirm}
+					<form onsubmit={handleConfirm} class="space-y-4">
+						<p class="text-fluid-xs text-muted-foreground">
+							<span class="font-medium text-foreground">{email}</span> に確認コードを送信しました
+						</p>
+						<Input
+							type="text"
+							placeholder="確認コード"
+							bind:value={confirmCode}
+							required
+							class="rounded-xl bg-white/5 border-white/10"
+						/>
+						<Button
+							type="submit"
+							class="w-full bg-primary rounded-xl active:scale-[0.98] transition-transform"
+							disabled={isLoading}
+						>
+							{isLoading ? '確認中...' : '確認'}
+						</Button>
+					</form>
+				{:else}
+					<Tabs bind:value={activeTab}>
+						<TabsList class="grid w-full grid-cols-2 rounded-xl">
+							<TabsTrigger value="login" class="rounded-lg">ログイン</TabsTrigger>
+							<TabsTrigger value="signup" class="rounded-lg">新規登録</TabsTrigger>
+						</TabsList>
+
+						<TabsContent value="login">
+							<form onsubmit={handleLogin} class="space-y-4 pt-5">
+								<div class="space-y-3">
+									<Input
+										type="email"
+										placeholder="メールアドレス"
+										bind:value={email}
+										required
+										class="rounded-xl bg-white/5 border-white/10"
+									/>
+									<Input
+										type="password"
+										placeholder="パスワード"
+										bind:value={password}
+										required
+										class="rounded-xl bg-white/5 border-white/10"
+									/>
+								</div>
+								<Button
+									type="submit"
+									class="w-full bg-primary rounded-xl active:scale-[0.98] transition-transform"
+									disabled={isLoading}
+								>
+									{isLoading ? 'ログイン中...' : 'ログイン'}
+								</Button>
+							</form>
+						</TabsContent>
+
+						<TabsContent value="signup">
+							<form onsubmit={handleSignUp} class="space-y-4 pt-5">
+								<div class="space-y-3">
+									<Input
+										type="email"
+										placeholder="メールアドレス"
+										bind:value={email}
+										required
+										class="rounded-xl bg-white/5 border-white/10"
+									/>
+									<Input
+										type="password"
+										placeholder="パスワード (8文字以上)"
+										bind:value={password}
+										minlength={8}
+										required
+										class="rounded-xl bg-white/5 border-white/10"
+									/>
+								</div>
+								<Button
+									type="submit"
+									class="w-full bg-primary rounded-xl active:scale-[0.98] transition-transform"
+									disabled={isLoading}
+								>
+									{isLoading ? '登録中...' : 'アカウント作成'}
+								</Button>
+							</form>
+						</TabsContent>
+					</Tabs>
+				{/if}
+			</div>
+		</div>
+	</div>
 </div>
