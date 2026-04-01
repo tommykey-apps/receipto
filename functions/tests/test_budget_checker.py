@@ -33,12 +33,12 @@ def test_50_pct_used_threshold_80(ddb_table):
 
     # Set budget: 10000, threshold 80%
     ddb_table.put_item(Item={
-        "PK": "USER#user-123", "SK": "BDG#2026-03#food",
+        "pk": "USER#user-123", "sk": "BDG#2026-03#food",
         "amount": 10000, "alert_threshold_pct": 80, "category": "food",
     })
     # Set summary: spent 5000 on food
     ddb_table.put_item(Item={
-        "PK": "USER#user-123", "SK": "SUM#2026-03",
+        "pk": "USER#user-123", "sk": "SUM#2026-03",
         "month": "2026-03", "total": 5000, "expense_count": 3,
         "by_category": {"food": 5000},
     })
@@ -55,11 +55,11 @@ def test_exactly_80_pct_exceeded(ddb_table):
     budget_checker.table = ddb_table
 
     ddb_table.put_item(Item={
-        "PK": "USER#user-123", "SK": "BDG#2026-03#food",
+        "pk": "USER#user-123", "sk": "BDG#2026-03#food",
         "amount": 10000, "alert_threshold_pct": 80, "category": "food",
     })
     ddb_table.put_item(Item={
-        "PK": "USER#user-123", "SK": "SUM#2026-03",
+        "pk": "USER#user-123", "sk": "SUM#2026-03",
         "month": "2026-03", "total": 8000, "expense_count": 5,
         "by_category": {"food": 8000},
     })
@@ -76,11 +76,11 @@ def test_120_pct_exceeded(ddb_table):
     budget_checker.table = ddb_table
 
     ddb_table.put_item(Item={
-        "PK": "USER#user-123", "SK": "BDG#2026-03#food",
+        "pk": "USER#user-123", "sk": "BDG#2026-03#food",
         "amount": 10000, "alert_threshold_pct": 80, "category": "food",
     })
     ddb_table.put_item(Item={
-        "PK": "USER#user-123", "SK": "SUM#2026-03",
+        "pk": "USER#user-123", "sk": "SUM#2026-03",
         "month": "2026-03", "total": 12000, "expense_count": 8,
         "by_category": {"food": 12000},
     })

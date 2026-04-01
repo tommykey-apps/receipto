@@ -19,8 +19,8 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
 
     # Get budget for this category and month
     resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"USER#{user_id}")
-        & Key("SK").eq(f"BDG#{month}#{category}"),
+        KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+        & Key("sk").eq(f"BDG#{month}#{category}"),
     )
     items = resp.get("Items", [])
 
@@ -39,7 +39,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
 
     # Get current monthly summary
     summary_resp = table.get_item(
-        Key={"PK": f"USER#{user_id}", "SK": f"SUM#{month}"}
+        Key={"pk": f"USER#{user_id}", "sk": f"SUM#{month}"}
     )
     summary = summary_resp.get("Item", {})
     by_category = summary.get("by_category", {})
