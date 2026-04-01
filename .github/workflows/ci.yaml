@@ -7,6 +7,8 @@ on:
       - "api/**"
       - "web/**"
       - "functions/**"
+  merge_group:
+    branches: [main]
 
 jobs:
   test-api-unit:
