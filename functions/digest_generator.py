@@ -25,7 +25,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     month = datetime.now(timezone.utc).strftime("%Y-%m")
 
     # Get monthly summary
-    resp = table.get_item(Key={"PK": f"USER#{user_id}", "SK": f"SUM#{month}"})
+    resp = table.get_item(Key={"pk": f"USER#{user_id}", "sk": f"SUM#{month}"})
     summary = resp.get("Item")
 
     if not summary:
@@ -37,8 +37,8 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
 
     # Get budgets
     budget_resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"USER#{user_id}")
-        & Key("SK").begins_with(f"BDG#{month}"),
+        KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+        & Key("sk").begins_with(f"BDG#{month}"),
     )
     budgets = {item["category"]: int(item["amount"]) for item in budget_resp.get("Items", [])}
 

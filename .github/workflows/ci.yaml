@@ -6,9 +6,10 @@ on:
     paths:
       - "api/**"
       - "web/**"
+      - "functions/**"
 
 jobs:
-  test-api:
+  test-api-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +22,70 @@ jobs:
         run: |
           cd api
           pip install -r requirements.txt
-          python -c "from app import create_app; print('Import OK')"
+          pip install pytest "moto[dynamodb,s3]" httpx
+          python -m pytest tests/ --ignore=tests/integration -v
+
+  test-functions-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install and test
+        run: |
+          cd functions
+          pip install -r requirements-dev.txt
+          pip install boto3 python-ulid python-dateutil
+          python -m pytest tests/ --ignore=tests/integration -v
+
+  test-web-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: flox/install-flox-action@main
+
+      - name: Test
+        run: |
+          flox activate -- bash -c '
+            cd web
+            pnpm install --frozen-lockfile
+            pnpm test
+          '
+
+  test-integration:
+    runs-on: ubuntu-latest
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local:latest
+        ports:
+          - 8000:8000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          cd api
+          pip install -r requirements.txt
+          pip install pytest "moto[dynamodb,s3]" httpx
+          cd ../functions
+          pip install -r requirements-dev.txt
+          pip install boto3 python-ulid python-dateutil
+
+      - name: API integration tests
+        run: cd api && python -m pytest tests/integration/ -v
+
+      - name: Lambda integration tests
+        run: cd functions && python -m pytest tests/integration/ -v
 
   build-web:
     runs-on: ubuntu-latest
@@ -32,10 +96,11 @@ jobs:
 
       - uses: flox/install-flox-action@main
 
-      - name: Build SvelteKit
+      - name: Build and check SvelteKit
         run: |
           flox activate -- bash -c '
             cd web
             pnpm install --frozen-lockfile
             pnpm build
+            pnpm check
           '

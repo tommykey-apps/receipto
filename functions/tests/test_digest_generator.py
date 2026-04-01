@@ -40,8 +40,8 @@ def test_with_expenses_sends_email(ddb_table, ses_verified):
     month = datetime.now(timezone.utc).strftime("%Y-%m")
 
     ddb_table.put_item(Item={
-        "PK": "USER#user-123",
-        "SK": f"SUM#{month}",
+        "pk": "USER#user-123",
+        "sk": f"SUM#{month}",
         "month": month,
         "total": 25000,
         "expense_count": 10,

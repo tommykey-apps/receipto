@@ -26,17 +26,17 @@ def aws(monkeypatch):
 
 @pytest.fixture()
 def ddb_table(aws):
-    """Create a DynamoDB table with PK (HASH) and SK (RANGE) — UPPERCASE keys."""
+    """Create a DynamoDB table with pk (HASH) and sk (RANGE) — lowercase keys."""
     dynamodb = boto3.resource("dynamodb", region_name="ap-northeast-1")
     table = dynamodb.create_table(
         TableName="expense-tracker",
         KeySchema=[
-            {"AttributeName": "PK", "KeyType": "HASH"},
-            {"AttributeName": "SK", "KeyType": "RANGE"},
+            {"AttributeName": "pk", "KeyType": "HASH"},
+            {"AttributeName": "sk", "KeyType": "RANGE"},
         ],
         AttributeDefinitions=[
-            {"AttributeName": "PK", "AttributeType": "S"},
-            {"AttributeName": "SK", "AttributeType": "S"},
+            {"AttributeName": "pk", "AttributeType": "S"},
+            {"AttributeName": "sk", "AttributeType": "S"},
         ],
         BillingMode="PAY_PER_REQUEST",
     )

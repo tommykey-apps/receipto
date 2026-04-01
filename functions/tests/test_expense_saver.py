@@ -44,7 +44,7 @@ def test_monthly_summary_updated(ddb_table):
     month = result["month"]
 
     summary = ddb_table.get_item(
-        Key={"PK": "USER#user-123", "SK": f"SUM#{month}"}
+        Key={"pk": "USER#user-123", "sk": f"SUM#{month}"}
     ).get("Item")
     assert summary is not None
     assert int(summary["total"]) == 1500
@@ -59,15 +59,15 @@ def test_receipt_status_completed(ddb_table):
 
     # Pre-create the receipt item so the update_item has something to update
     ddb_table.put_item(Item={
-        "PK": "USER#user-123",
-        "SK": "RCV#rcv-001",
+        "pk": "USER#user-123",
+        "sk": "RCV#rcv-001",
         "status": "processing",
     })
 
     expense_saver.handler(_make_event(receipt_id="rcv-001"), None)
 
     rcv = ddb_table.get_item(
-        Key={"PK": "USER#user-123", "SK": "RCV#rcv-001"}
+        Key={"pk": "USER#user-123", "sk": "RCV#rcv-001"}
     ).get("Item")
     assert rcv["status"] == "completed"
 
