@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Camera, Upload, Check, Loader2 } from 'lucide-svelte';
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Camera, Upload, Check } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
@@ -127,121 +126,151 @@
 	}
 </script>
 
-<div class="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
-	<h1 class="text-2xl font-bold">レシート撮影</h1>
+<div class="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+	<!-- Page header -->
+	<h1 class="text-fluid-xl font-bold tracking-tight animate-fade-up">レシート撮影</h1>
 
 	{#if error}
-		<div class="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+		<div class="glass rounded-2xl border-destructive/20 bg-destructive/5 p-4 text-fluid-sm text-destructive animate-fade-up">
+			{error}
+		</div>
 	{/if}
 
 	{#if ocrResult}
-		<Card class="rounded-xl">
-			<CardHeader>
-				<CardTitle class="text-base">読み取り結果を確認</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<form onsubmit={handleSave} class="space-y-4">
-					<div>
-						<label class="mb-1 block text-sm text-muted-foreground">店名</label>
-						<Input bind:value={editForm.store_name} required />
-					</div>
-					<div>
-						<label class="mb-1 block text-sm text-muted-foreground">金額</label>
-						<Input type="number" bind:value={editForm.amount} min={1} required />
-					</div>
-					<div>
-						<label class="mb-1 block text-sm text-muted-foreground">日付</label>
-						<Input type="date" bind:value={editForm.date} required />
-					</div>
-					<div>
-						<label class="mb-1 block text-sm text-muted-foreground">カテゴリ</label>
-						<Select type="single" bind:value={editForm.category_id}>
-							<SelectTrigger>
-								<span class="text-muted-foreground">{categories.find(c => c.id === editForm.category_id)?.name ?? 'カテゴリを選択'}</span>
-							</SelectTrigger>
-							<SelectContent>
-								{#each categories as cat}
-									<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
-								{/each}
-							</SelectContent>
-						</Select>
-					</div>
-					<div>
-						<label class="mb-1 block text-sm text-muted-foreground">メモ</label>
-						<Input bind:value={editForm.memo} placeholder="任意" />
-					</div>
-					<div class="flex gap-2">
-						<Button type="submit" class="flex-1 rounded-lg gap-2">
-							<Check class="h-4 w-4" />
-							保存する
-						</Button>
-						<Button type="button" variant="outline" class="rounded-lg" onclick={reset}>
-							やり直し
-						</Button>
-					</div>
-				</form>
-			</CardContent>
-		</Card>
+		<!-- OCR result form -->
+		<div class="glass rounded-2xl p-6 animate-fade-up space-y-6">
+			<div class="flex items-center gap-3">
+				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+					<Check class="h-5 w-5" />
+				</div>
+				<h2 class="text-fluid-lg font-bold tracking-tight">読み取り結果を確認</h2>
+			</div>
+			<form onsubmit={handleSave} class="space-y-4">
+				<div class="space-y-1.5">
+					<label class="text-fluid-xs text-muted-foreground font-medium block">店名</label>
+					<Input bind:value={editForm.store_name} class="rounded-xl" required />
+				</div>
+				<div class="space-y-1.5">
+					<label class="text-fluid-xs text-muted-foreground font-medium block">金額</label>
+					<Input type="number" bind:value={editForm.amount} min={1} class="rounded-xl amount" required />
+				</div>
+				<div class="space-y-1.5">
+					<label class="text-fluid-xs text-muted-foreground font-medium block">日付</label>
+					<Input type="date" bind:value={editForm.date} class="rounded-xl" required />
+				</div>
+				<div class="space-y-1.5">
+					<label class="text-fluid-xs text-muted-foreground font-medium block">カテゴリ</label>
+					<Select type="single" bind:value={editForm.category_id}>
+						<SelectTrigger class="rounded-xl">
+							<span class="text-muted-foreground">{categories.find(c => c.id === editForm.category_id)?.name ?? 'カテゴリを選択'}</span>
+						</SelectTrigger>
+						<SelectContent class="glass rounded-xl border-glass-border">
+							{#each categories as cat}
+								<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
+							{/each}
+						</SelectContent>
+					</Select>
+				</div>
+				<div class="space-y-1.5">
+					<label class="text-fluid-xs text-muted-foreground font-medium block">メモ</label>
+					<Input bind:value={editForm.memo} placeholder="任意" class="rounded-xl" />
+				</div>
+				<div class="flex gap-3 pt-2">
+					<Button type="submit" class="flex-1 rounded-xl gap-2 text-fluid-sm font-semibold">
+						<Check class="h-4 w-4" />
+						保存する
+					</Button>
+					<Button type="button" variant="outline" class="rounded-xl text-fluid-sm" onclick={reset}>
+						やり直し
+					</Button>
+				</div>
+			</form>
+		</div>
 	{:else if uploading || processing}
-		<Card class="rounded-xl">
-			<CardContent class="flex flex-col items-center gap-4 py-12">
-				<Loader2 class="h-8 w-8 animate-spin text-primary" />
-				<p class="text-muted-foreground">
-					{uploading ? 'アップロード中...' : 'OCR処理中...'}
-				</p>
-			</CardContent>
-		</Card>
+		<!-- Uploading / Processing state -->
+		<div class="glass rounded-2xl flex flex-col items-center gap-6 py-16 animate-fade-up">
+			{#if uploading}
+				<div class="relative">
+					<Upload class="h-12 w-12 text-primary animate-bounce" />
+				</div>
+				<p class="text-fluid-sm text-muted-foreground font-medium">アップロード中...</p>
+			{:else}
+				<!-- Pulsing receipt icon for OCR processing -->
+				<div class="relative flex items-center justify-center">
+					<div class="absolute h-20 w-20 rounded-full bg-primary/10 animate-ping" style="animation-duration: 2s;"></div>
+					<div class="absolute h-14 w-14 rounded-full bg-primary/15 animate-pulse"></div>
+					<span class="relative text-4xl">🧾</span>
+				</div>
+				<div class="text-center space-y-1">
+					<p class="text-fluid-sm text-foreground font-medium">OCR処理中</p>
+					<p class="text-fluid-xs text-muted-foreground">レシートを解析しています...</p>
+				</div>
+			{/if}
+		</div>
 	{:else}
-		<Card class="rounded-xl">
-			<CardContent class="pt-6">
-				<input
-					bind:this={fileInput}
-					type="file"
-					accept="image/*"
-					capture="environment"
-					class="hidden"
-					onchange={handleFileSelect}
-				/>
+		<input
+			bind:this={fileInput}
+			type="file"
+			accept="image/*"
+			capture="environment"
+			class="hidden"
+			onchange={handleFileSelect}
+		/>
 
-				{#if preview}
-					<div class="space-y-4">
-						<img src={preview} alt="レシートプレビュー" class="w-full rounded-lg" />
-						<div class="flex gap-2">
-							<Button class="flex-1 rounded-lg gap-2" onclick={handleUpload}>
-								<Upload class="h-4 w-4" />
-								アップロード
-							</Button>
-							<Button variant="outline" class="rounded-lg" onclick={reset}>
-								撮り直し
-							</Button>
-						</div>
+		{#if preview}
+			<!-- Image preview -->
+			<div class="space-y-4 animate-fade-up">
+				<div class="glass rounded-2xl p-3 overflow-hidden">
+					<img src={preview} alt="レシートプレビュー" class="w-full rounded-xl shadow-lg" />
+				</div>
+				<div class="flex gap-3">
+					<Button class="flex-1 rounded-xl gap-2 text-fluid-sm font-semibold" onclick={handleUpload}>
+						<Upload class="h-4 w-4" />
+						アップロード
+					</Button>
+					<Button variant="outline" class="rounded-xl text-fluid-sm" onclick={reset}>
+						撮り直し
+					</Button>
+				</div>
+			</div>
+		{:else}
+			<!-- Drop zone -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="glass rounded-2xl border-2 border-dashed transition-all duration-300 {dragOver
+					? 'border-primary shadow-[0_0_30px_oklch(0.55_0.15_165_/_0.2)]'
+					: 'border-glass-border'}"
+				ondragover={(e) => {
+					e.preventDefault();
+					dragOver = true;
+				}}
+				ondragleave={() => (dragOver = false)}
+				ondrop={handleDrop}
+			>
+				<div class="flex flex-col items-center gap-5 p-10 md:p-14 animate-fade-up">
+					<!-- Camera icon with glow -->
+					<div class="relative">
+						<div class="absolute inset-0 h-16 w-16 rounded-full bg-primary/20 blur-xl"></div>
+						<Camera class="relative h-16 w-16 text-primary" />
 					</div>
-				{:else}
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div
-						class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-border p-8 transition-colors {dragOver
-							? 'border-primary bg-primary/5'
-							: ''}"
-						ondragover={(e) => {
-							e.preventDefault();
-							dragOver = true;
-						}}
-						ondragleave={() => (dragOver = false)}
-						ondrop={handleDrop}
+
+					<div class="text-center space-y-1.5">
+						<p class="text-fluid-base font-semibold">レシートを撮影またはアップロード</p>
+						<p class="text-fluid-xs text-muted-foreground">
+							タップして撮影、またはファイルをドラッグ&ドロップ
+						</p>
+					</div>
+
+					<!-- Mobile camera button -->
+					<Button
+						class="w-full max-w-xs rounded-xl gap-2 text-fluid-sm font-semibold bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/20 md:w-auto md:px-8"
+						onclick={() => fileInput?.click()}
 					>
-						<Camera class="h-12 w-12 text-muted-foreground" />
-						<div class="text-center">
-							<p class="font-medium">レシートを撮影またはアップロード</p>
-							<p class="text-sm text-muted-foreground">
-								タップして撮影、またはファイルをドラッグ&ドロップ
-							</p>
-						</div>
-						<Button class="rounded-lg" onclick={() => fileInput?.click()}>
-							ファイルを選択
-						</Button>
-					</div>
-				{/if}
-			</CardContent>
-		</Card>
+						<Camera class="h-5 w-5" />
+						撮影・ファイルを選択
+					</Button>
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>

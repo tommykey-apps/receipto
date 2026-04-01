@@ -20,15 +20,15 @@
 
 <button
 	type="button"
-	class="flex w-full items-center gap-3 rounded-xl bg-card p-4 text-left transition-colors hover:bg-muted/50"
+	class="flex w-full items-center gap-3 rounded-2xl glass p-4 text-left card-hover"
 	{onclick}
 >
 	<CategoryBadge icon={expense.category_icon} name={expense.category_name} />
 	<div class="flex-1 min-w-0">
-		<p class="truncate font-medium text-card-foreground">{expense.store_name}</p>
-		<p class="text-xs text-muted-foreground">{formatDate(expense.date)}</p>
+		<p class="truncate font-medium text-fluid-sm">{expense.store_name}</p>
+		<p class="text-fluid-xs text-muted-foreground">{formatDate(expense.date)}</p>
 	</div>
-	<span class="text-sm font-semibold tabular-nums text-card-foreground">
+	<span class="amount text-fluid-sm">
 		{formatCurrency(expense.amount)}
 	</span>
 </button>

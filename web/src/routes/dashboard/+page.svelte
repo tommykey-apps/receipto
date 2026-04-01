@@ -37,11 +37,15 @@
 	const categoryBreakdown = $derived(summary?.by_category ?? []);
 </script>
 
-<div class="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-bold">ダッシュボード</h1>
+<div class="mx-auto max-w-5xl p-4 md:p-6">
+	<!-- Header -->
+	<div class="mb-6 flex items-end justify-between">
+		<div>
+			<p class="text-fluid-sm text-muted-foreground">ダッシュボード</p>
+			<h1 class="text-fluid-lg font-semibold tracking-tight">支出サマリー</h1>
+		</div>
 		<a href="/upload">
-			<Button class="rounded-lg gap-2">
+			<Button class="rounded-xl gap-2 px-5 py-2.5">
 				<Camera class="h-4 w-4" />
 				レシート撮影
 			</Button>
@@ -49,85 +53,126 @@
 	</div>
 
 	{#if loading}
-		<div class="flex items-center justify-center py-12">
-			<p class="text-muted-foreground">読み込み中...</p>
+		<!-- Skeleton bento grid -->
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:auto-rows-[180px] stagger">
+			<div class="skeleton rounded-2xl md:col-span-2 md:row-span-1 h-[180px]"></div>
+			<div class="skeleton rounded-2xl h-[180px]"></div>
+			<div class="skeleton rounded-2xl h-[180px]"></div>
+			<div class="skeleton rounded-2xl md:col-span-2 h-[180px]"></div>
+		</div>
+	{:else if !summary && recentExpenses.length === 0}
+		<!-- Empty state -->
+		<div class="glass rounded-2xl flex flex-col items-center justify-center py-20 px-8 text-center animate-fade-up">
+			<div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
+				<Camera class="h-10 w-10 text-primary" />
+			</div>
+			<h2 class="text-fluid-lg font-semibold mb-2">まだ記録がありません</h2>
+			<p class="text-muted-foreground text-fluid-sm max-w-sm mb-6">
+				レシートを撮影するか、手動で支出を追加して家計管理をはじめましょう
+			</p>
+			<a href="/upload">
+				<Button class="rounded-xl gap-2 px-6 py-3">
+					<Camera class="h-4 w-4" />
+					最初のレシートを撮影
+				</Button>
+			</a>
 		</div>
 	{:else}
-		<Card class="rounded-xl">
-			<CardContent class="pt-6">
-				<p class="text-sm text-muted-foreground">今月の支出</p>
-				<AmountDisplay amount={totalSpent} size="xl" />
-				<div class="mt-2 flex items-center gap-4 text-sm">
+		<!-- Bento grid -->
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:auto-rows-[180px] stagger">
+
+			<!-- Hero amount — spans 2 cols -->
+			<div class="glass rounded-2xl card-hover p-6 md:p-8 flex flex-col justify-between md:col-span-2">
+				<p class="text-fluid-sm text-muted-foreground">
+					今月は
+				</p>
+				<div>
+					<AmountDisplay amount={totalSpent} size="hero" animate />
+					<p class="text-fluid-sm text-muted-foreground mt-1">使いました</p>
+				</div>
+				<div class="flex items-center gap-4 text-fluid-xs">
 					{#if lastMonthDiff !== 0}
-						<span class={lastMonthDiff > 0 ? 'text-destructive' : 'text-primary'}>
-							{lastMonthDiff > 0 ? '+' : ''}{lastMonthDiff.toFixed(1)}% 先月比
+						<span
+							class="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 {lastMonthDiff > 0
+								? 'bg-[oklch(0.75_0.14_85/0.15)] text-[oklch(0.55_0.14_85)]'
+								: 'bg-primary/10 text-primary'}"
+						>
+							{lastMonthDiff > 0 ? '↑' : '↓'}{Math.abs(lastMonthDiff).toFixed(1)}% 先月比
 						</span>
 					{/if}
 					{#if totalBudget > 0}
 						<span class="text-muted-foreground">
-							残り {formatCurrency(remaining)}
+							残り <span class="amount">{formatCurrency(remaining)}</span>
 						</span>
 					{/if}
 				</div>
-			</CardContent>
-		</Card>
+			</div>
 
-		{#if categoryBreakdown.length > 0}
-			<Card class="rounded-xl">
-				<CardHeader>
-					<CardTitle class="text-base">カテゴリ別</CardTitle>
-				</CardHeader>
-				<CardContent class="space-y-3">
-					{#each categoryBreakdown as cat}
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<span>{cat.icon ?? '📦'}</span>
-								<span class="text-sm">{cat.name}</span>
+			<!-- Category donut / breakdown — tall card -->
+			{#if categoryBreakdown.length > 0}
+				<div class="glass rounded-2xl card-hover p-5 flex flex-col md:row-span-2 overflow-hidden">
+					<h3 class="text-fluid-xs font-medium text-muted-foreground mb-3">カテゴリ別</h3>
+					<div class="flex-1 space-y-2.5 overflow-y-auto no-scrollbar">
+						{#each categoryBreakdown as cat}
+							{@const pct = totalSpent > 0 ? (cat.amount / totalSpent * 100) : 0}
+							<div class="flex items-center gap-2.5">
+								<span class="text-base shrink-0">{cat.icon ?? '📦'}</span>
+								<div class="flex-1 min-w-0">
+									<div class="flex items-center justify-between mb-0.5">
+										<span class="text-fluid-xs truncate">{cat.name}</span>
+										<span class="amount text-fluid-xs shrink-0 ml-2">{formatCurrency(cat.amount)}</span>
+									</div>
+									<div class="h-1 rounded-full bg-muted overflow-hidden">
+										<div
+											class="h-full rounded-full bg-primary/60 transition-all duration-500"
+											style="width: {pct}%"
+										></div>
+									</div>
+								</div>
 							</div>
-							<span class="text-sm font-medium tabular-nums">
-								{formatCurrency(cat.amount)}
-							</span>
-						</div>
-					{/each}
-				</CardContent>
-			</Card>
-		{/if}
+						{/each}
+					</div>
+				</div>
+			{/if}
 
-		{#if budgets.length > 0}
-			<Card class="rounded-xl">
-				<CardHeader>
-					<CardTitle class="text-base">予算消化</CardTitle>
-				</CardHeader>
-				<CardContent class="space-y-4">
-					{#each budgets as b}
-						<BudgetProgress
-							label={b.category_name ?? b.category_id}
-							icon={b.icon}
-							spent={b.spent ?? 0}
-							budget={b.amount ?? 0}
-						/>
-					{/each}
-				</CardContent>
-			</Card>
-		{/if}
+			<!-- Budget progress -->
+			{#if budgets.length > 0}
+				<div class="glass rounded-2xl card-hover p-5 flex flex-col {categoryBreakdown.length === 0 ? 'md:col-span-1' : 'md:col-span-2'}">
+					<h3 class="text-fluid-xs font-medium text-muted-foreground mb-3">予算消化</h3>
+					<div class="flex-1 space-y-3 overflow-y-auto no-scrollbar">
+						{#each budgets as b}
+							<BudgetProgress
+								label={b.category_name ?? b.category_id}
+								icon={b.icon}
+								spent={b.spent ?? 0}
+								budget={b.amount ?? 0}
+							/>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
-		<Card class="rounded-xl">
-			<CardHeader>
-				<CardTitle class="text-base">最近の支出</CardTitle>
-			</CardHeader>
-			<CardContent>
+			<!-- Recent expenses -->
+			<div class="glass rounded-2xl card-hover p-5 flex flex-col md:col-span-{categoryBreakdown.length > 0 ? '2' : '3'} md:row-span-{recentExpenses.length > 3 ? '2' : '1'}">
+				<div class="flex items-center justify-between mb-3">
+					<h3 class="text-fluid-xs font-medium text-muted-foreground">最近の支出</h3>
+					<a href="/expenses" class="text-fluid-xs text-primary hover:underline">すべて見る</a>
+				</div>
 				{#if recentExpenses.length === 0}
-					<p class="py-4 text-center text-sm text-muted-foreground">
-						まだ支出がありません
-					</p>
+					<div class="flex-1 flex flex-col items-center justify-center text-center py-6">
+						<Camera class="h-8 w-8 text-muted-foreground/40 mb-2" />
+						<p class="text-fluid-xs text-muted-foreground">
+							レシートを撮影して支出を記録しましょう
+						</p>
+					</div>
 				{:else}
-					<div class="space-y-2">
+					<div class="flex-1 space-y-2 overflow-y-auto no-scrollbar">
 						{#each recentExpenses as expense}
 							<ExpenseCard {expense} onclick={() => window.location.href = `/expenses`} />
 						{/each}
 					</div>
 				{/if}
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	{/if}
 </div>
