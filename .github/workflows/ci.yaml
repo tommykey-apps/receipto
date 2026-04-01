@@ -38,7 +38,7 @@ jobs:
         run: |
           cd functions
           pip install -r requirements-dev.txt
-          pip install boto3 python-ulid python-dateutil
+          pip install boto3 python-ulid python-dateutil typing_extensions
           python -m pytest tests/ --ignore=tests/integration -v
 
   test-web-unit:
@@ -79,7 +79,7 @@ jobs:
           pip install pytest "moto[dynamodb,s3]" httpx
           cd ../functions
           pip install -r requirements-dev.txt
-          pip install boto3 python-ulid python-dateutil
+          pip install boto3 python-ulid python-dateutil typing_extensions
 
       - name: API integration tests
         run: cd api && python -m pytest tests/integration/ -v
