@@ -24,6 +24,23 @@ export function formatDate(date: string): string {
 	return `${y}/${m}/${day}`;
 }
 
+const CATEGORY_ICONS: Record<string, string> = {
+	food: '🍽️',
+	transport: '🚃',
+	daily: '🛍️',
+	entertainment: '🎮',
+	utility: '⚡',
+	telecom: '📶',
+	medical: '🏥',
+	clothing: '👕',
+	education: '📚',
+	other: '🏷️'
+};
+
+export function categoryIcon(name: string): string {
+	return CATEGORY_ICONS[name] ?? '📦';
+}
+
 export function getCurrentMonth(): string {
 	const d = new Date();
 	const y = d.getFullYear();

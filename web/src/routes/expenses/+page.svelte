@@ -19,8 +19,7 @@
 	let newExpense = $state({
 		store_name: '',
 		amount: 0,
-		date: new Date().toISOString().split('T')[0],
-		category_id: '',
+		category: '',
 		memo: ''
 	});
 
@@ -41,15 +40,14 @@
 	onMount(loadData);
 
 	async function handleCreate() {
-		if (!newExpense.store_name || !newExpense.amount) return;
+		if (!newExpense.store_name || !newExpense.amount || !newExpense.category) return;
 		try {
 			await createExpense(newExpense);
 			dialogOpen = false;
 			newExpense = {
 				store_name: '',
 				amount: 0,
-				date: new Date().toISOString().split('T')[0],
-				category_id: '',
+				category: '',
 				memo: ''
 			};
 			await loadData();
@@ -101,18 +99,14 @@
 						<Input type="number" placeholder="0" bind:value={newExpense.amount} min={1} class="rounded-xl amount" required />
 					</div>
 					<div class="space-y-1.5">
-						<label class="text-fluid-xs text-muted-foreground font-medium">日付</label>
-						<Input type="date" bind:value={newExpense.date} class="rounded-xl" required />
-					</div>
-					<div class="space-y-1.5">
 						<label class="text-fluid-xs text-muted-foreground font-medium">カテゴリ</label>
-						<Select type="single" bind:value={newExpense.category_id}>
+						<Select type="single" bind:value={newExpense.category}>
 							<SelectTrigger class="rounded-xl">
-								<span class="text-muted-foreground">{categories.find(c => c.id === newExpense.category_id)?.name ?? 'カテゴリを選択'}</span>
+								<span class="text-muted-foreground">{categories.find(c => c.name === newExpense.category)?.display_name ?? 'カテゴリを選択'}</span>
 							</SelectTrigger>
 							<SelectContent class="glass rounded-xl border-glass-border">
 								{#each categories as cat}
-									<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
+									<SelectItem value={cat.name}>{cat.icon ?? '📦'} {cat.display_name}</SelectItem>
 								{/each}
 							</SelectContent>
 						</Select>
@@ -137,12 +131,12 @@
 		/>
 		<Select type="single" bind:value={selectedCategory} onValueChange={handleCategoryChange}>
 			<SelectTrigger class="w-40 rounded-xl bg-transparent border-glass-border">
-				<span class="text-fluid-xs text-muted-foreground">{categories.find(c => c.id === selectedCategory)?.name ?? '全カテゴリ'}</span>
+				<span class="text-fluid-xs text-muted-foreground">{categories.find(c => c.name === selectedCategory)?.display_name ?? '全カテゴリ'}</span>
 			</SelectTrigger>
 			<SelectContent class="glass rounded-xl border-glass-border">
 				<SelectItem value="">すべて</SelectItem>
 				{#each categories as cat}
-					<SelectItem value={cat.id}>{cat.icon ?? '📦'} {cat.name}</SelectItem>
+					<SelectItem value={cat.name}>{cat.icon ?? '📦'} {cat.display_name}</SelectItem>
 				{/each}
 			</SelectContent>
 		</Select>
