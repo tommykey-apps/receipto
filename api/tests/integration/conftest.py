@@ -16,7 +16,6 @@ import uuid
 
 import boto3
 import pytest
-from moto import mock_aws
 
 # ---------------------------------------------------------------------------
 # Check DynamoDB Local reachability once at import time
@@ -125,25 +124,18 @@ def table(integration_table):
 def client(table):
     """FastAPI TestClient pointed at the real DynamoDB Local table.
 
-    Uses moto ONLY for S3 (presigned URLs). DynamoDB goes to DynamoDB Local
-    because DYNAMODB_ENDPOINT env var is set.
+    S3 presigned URLs are generated but never used for real uploads in
+    integration tests, so we just set S3_ENDPOINT to DynamoDB Local
+    (the presigned URL will be syntactically valid but not functional).
     """
     os.environ["RECEIPTS_BUCKET"] = "test-receipts-bucket"
-    os.environ.pop("S3_ENDPOINT", None)
+    os.environ["S3_ENDPOINT"] = _DYNAMODB_ENDPOINT
 
     _purge_app_modules()
 
-    with mock_aws():
-        # Create S3 bucket in moto
-        s3 = boto3.client("s3", region_name="ap-northeast-1")
-        s3.create_bucket(
-            Bucket="test-receipts-bucket",
-            CreateBucketConfiguration={"LocationConstraint": "ap-northeast-1"},
-        )
+    from app import create_app
+    from starlette.testclient import TestClient
 
-        from app import create_app
-        from starlette.testclient import TestClient
-
-        app = create_app()
-        with TestClient(app) as c:
-            yield c
+    app = create_app()
+    with TestClient(app) as c:
+        yield c
