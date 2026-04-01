@@ -32,8 +32,8 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     month = now[:7]
 
     expense = {
-        "PK": f"USER#{user_id}",
-        "SK": f"EXP#{now}#{expense_id}",
+        "pk": f"USER#{user_id}",
+        "sk": f"EXP#{now}#{expense_id}",
         "id": expense_id,
         "amount": amount,
         "category": category,
@@ -47,7 +47,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     # Update monthly summary
     try:
         table.update_item(
-            Key={"PK": f"USER#{user_id}", "SK": f"SUM#{month}"},
+            Key={"pk": f"USER#{user_id}", "sk": f"SUM#{month}"},
             UpdateExpression=(
                 "SET #total = if_not_exists(#total, :zero) + :amt, "
                 "#cnt = if_not_exists(#cnt, :zero) + :one, "
@@ -71,8 +71,8 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     except Exception:
         table.put_item(
             Item={
-                "PK": f"USER#{user_id}",
-                "SK": f"SUM#{month}",
+                "pk": f"USER#{user_id}",
+                "sk": f"SUM#{month}",
                 "month": month,
                 "total": amount,
                 "expense_count": 1,
@@ -82,7 +82,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
 
     # Update receipt status
     table.update_item(
-        Key={"PK": f"USER#{user_id}", "SK": f"RCV#{receipt_id}"},
+        Key={"pk": f"USER#{user_id}", "sk": f"RCV#{receipt_id}"},
         UpdateExpression="SET #status = :s, expense_id = :eid",
         ExpressionAttributeNames={"#status": "status"},
         ExpressionAttributeValues={":s": "completed", ":eid": expense_id},
