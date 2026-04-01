@@ -26,8 +26,7 @@ export async function getExpenses(month?: string, category?: string) {
 export async function createExpense(data: {
 	store_name: string;
 	amount: number;
-	date: string;
-	category_id: string;
+	category: string;
 	memo?: string;
 }) {
 	const res = await authFetch('/api/expenses', {
@@ -42,8 +41,7 @@ export async function updateExpense(
 	data: {
 		store_name?: string;
 		amount?: number;
-		date?: string;
-		category_id?: string;
+		category?: string;
 		memo?: string;
 	}
 ) {

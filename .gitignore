@@ -27,3 +27,6 @@ infra/lambda_placeholder.zip
 .flox/run/
 .flox/cache/
 terraform.tfvars
+
+# Environment
+.env
