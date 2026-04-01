@@ -142,7 +142,7 @@
 					<div class="flex-1 space-y-3 overflow-y-auto no-scrollbar">
 						{#each budgets as b}
 							<BudgetProgress
-								label={b.category_name ?? b.category_id}
+								label={b.category}
 								icon={b.icon}
 								spent={b.spent ?? 0}
 								budget={b.amount ?? 0}

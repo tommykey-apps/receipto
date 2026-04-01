@@ -6,7 +6,7 @@
 	import BudgetProgress from '$lib/components/BudgetProgress.svelte';
 	import AmountDisplay from '$lib/components/AmountDisplay.svelte';
 	import { getBudgets, updateBudgets, getCategories } from '$lib/api';
-	import { getCurrentMonth, formatCurrency } from '$lib/utils';
+	import { getCurrentMonth, formatCurrency, categoryIcon } from '$lib/utils';
 
 	let categories = $state<any[]>([]);
 	let budgetData = $state<Record<string, { amount: number; spent: number; icon?: string; name?: string }>>({});
@@ -26,12 +26,12 @@
 
 			const map: typeof budgetData = {};
 			for (const cat of categories) {
-				const existing = budArray.find((b: any) => b.category_id === cat.id);
-				map[cat.id] = {
+				const existing = budArray.find((b: any) => b.category === cat.name);
+				map[cat.name] = {
 					amount: existing?.amount ?? 0,
 					spent: existing?.spent ?? 0,
 					icon: cat.icon,
-					name: cat.name
+					name: cat.display_name
 				};
 			}
 			budgetData = map;
@@ -127,16 +127,16 @@
 			<h2 class="text-fluid-base font-semibold tracking-tight mb-4 text-muted-foreground">カテゴリ別予算</h2>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 stagger">
 				{#each categories as cat}
-					{@const b = budgetData[cat.id]}
+					{@const b = budgetData[cat.name]}
 					{#if b}
 						{@const pct = b.amount > 0 ? Math.min((b.spent / b.amount) * 100, 100) : 0}
 						<div class="glass rounded-2xl p-5 card-hover">
 							<!-- Category header -->
 							<div class="flex items-center gap-3 mb-4">
 								<span class="flex items-center justify-center h-10 w-10 rounded-xl bg-muted/50 text-lg">
-									{cat.icon ?? '📦'}
+									{categoryIcon(cat.name)}
 								</span>
-								<span class="text-fluid-base font-medium truncate">{cat.name}</span>
+								<span class="text-fluid-base font-medium truncate">{cat.display_name}</span>
 							</div>
 
 							<!-- Progress bar -->
