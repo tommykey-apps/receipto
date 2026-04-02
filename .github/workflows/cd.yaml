@@ -111,20 +111,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
-      - uses: flox/install-flox-action@main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
 
       - name: Build SvelteKit
         env:
           VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
           VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
         run: |
-          flox activate -- bash -c '
-            cd web
-            pnpm install --frozen-lockfile
-            pnpm build
-          '
+          cd web
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - name: Deploy to S3
         run: aws s3 sync web/build/ s3://${{ secrets.FRONTEND_BUCKET }} --delete
