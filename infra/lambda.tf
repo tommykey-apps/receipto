@@ -326,7 +326,7 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Effect = "Allow"
         Action = "bedrock:InvokeModel"
         Resource = [
-          "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.*",
+          "arn:aws:bedrock:*::foundation-model/anthropic.*",
           "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/apac.anthropic.*",
         ]
       },
