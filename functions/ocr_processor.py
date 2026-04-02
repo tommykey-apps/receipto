@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
 import re
 
 import boto3
 
+# Lambda runs in us-east-1 alongside Textract — no cross-region needed
 textract = boto3.client("textract")
 
 
@@ -29,13 +31,15 @@ def _parse_amount(raw: str | None) -> int | None:
 
 
 def handler(event: dict, context: object) -> dict:  # noqa: ARG001
-    bucket = event["bucket"]
     s3_key = event["s3_key"]
     receipt_id = event["receipt_id"]
     user_id = event["user_id"]
 
+    # Use the us-east-1 replica bucket (S3Object reference, 10MB limit)
+    us_bucket = os.environ.get("RECEIPTS_BUCKET_US", event.get("bucket", ""))
+
     resp = textract.analyze_expense(
-        Document={"S3Object": {"Bucket": bucket, "Name": s3_key}}
+        Document={"S3Object": {"Bucket": us_bucket, "Name": s3_key}}
     )
 
     store_name = None
@@ -59,7 +63,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     return {
         "receipt_id": receipt_id,
         "user_id": user_id,
-        "bucket": bucket,
+        "bucket": event.get("bucket", ""),
         "s3_key": s3_key,
         "extracted": {
             "store_name": store_name or "",
