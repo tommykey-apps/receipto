@@ -7,7 +7,7 @@
 	import ExpenseCard from '$lib/components/ExpenseCard.svelte';
 	import BudgetProgress from '$lib/components/BudgetProgress.svelte';
 	import { getMonthlySummary, getExpenses, getBudgets } from '$lib/api';
-	import { getCurrentMonth, formatCurrency } from '$lib/utils';
+	import { getCurrentMonth, formatCurrency, categoryIcon } from '$lib/utils';
 
 	let summary = $state<any>(null);
 	let recentExpenses = $state<any[]>([]);
@@ -30,11 +30,10 @@
 		}
 	});
 
-	const totalSpent = $derived(summary?.total_spent ?? 0);
-	const lastMonthDiff = $derived(summary?.last_month_diff ?? 0);
-	const totalBudget = $derived(summary?.total_budget ?? 0);
-	const remaining = $derived(totalBudget - totalSpent);
-	const categoryBreakdown = $derived(summary?.by_category ?? []);
+	const totalSpent = $derived(summary?.total ?? 0);
+	const expenseCount = $derived(summary?.expense_count ?? 0);
+	const byCategory = $derived(summary?.by_category ?? {});
+	const categoryEntries = $derived(Object.entries(byCategory) as [string, number][]);
 </script>
 
 <div class="mx-auto max-w-5xl p-4 md:p-6">
@@ -91,36 +90,27 @@
 					<p class="text-fluid-sm text-muted-foreground mt-1">使いました</p>
 				</div>
 				<div class="flex items-center gap-4 text-fluid-xs">
-					{#if lastMonthDiff !== 0}
-						<span
-							class="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 {lastMonthDiff > 0
-								? 'bg-[oklch(0.75_0.14_85/0.15)] text-[oklch(0.55_0.14_85)]'
-								: 'bg-primary/10 text-primary'}"
-						>
-							{lastMonthDiff > 0 ? '↑' : '↓'}{Math.abs(lastMonthDiff).toFixed(1)}% 先月比
-						</span>
-					{/if}
-					{#if totalBudget > 0}
+					{#if expenseCount > 0}
 						<span class="text-muted-foreground">
-							残り <span class="amount">{formatCurrency(remaining)}</span>
+							{expenseCount}件の支出
 						</span>
 					{/if}
 				</div>
 			</div>
 
-			<!-- Category donut / breakdown — tall card -->
-			{#if categoryBreakdown.length > 0}
+			<!-- Category breakdown — tall card -->
+			{#if categoryEntries.length > 0}
 				<div class="glass rounded-2xl card-hover p-5 flex flex-col md:row-span-2 overflow-hidden">
 					<h3 class="text-fluid-xs font-medium text-muted-foreground mb-3">カテゴリ別</h3>
 					<div class="flex-1 space-y-2.5 overflow-y-auto no-scrollbar">
-						{#each categoryBreakdown as cat}
-							{@const pct = totalSpent > 0 ? (cat.amount / totalSpent * 100) : 0}
+						{#each categoryEntries as [catName, amount]}
+							{@const pct = totalSpent > 0 ? (amount / totalSpent * 100) : 0}
 							<div class="flex items-center gap-2.5">
-								<span class="text-base shrink-0">{cat.icon ?? '📦'}</span>
+								<span class="text-base shrink-0">{categoryIcon(catName)}</span>
 								<div class="flex-1 min-w-0">
 									<div class="flex items-center justify-between mb-0.5">
-										<span class="text-fluid-xs truncate">{cat.name}</span>
-										<span class="amount text-fluid-xs shrink-0 ml-2">{formatCurrency(cat.amount)}</span>
+										<span class="text-fluid-xs truncate">{catName}</span>
+										<span class="amount text-fluid-xs shrink-0 ml-2">{formatCurrency(amount)}</span>
 									</div>
 									<div class="h-1 rounded-full bg-muted overflow-hidden">
 										<div
@@ -137,7 +127,7 @@
 
 			<!-- Budget progress -->
 			{#if budgets.length > 0}
-				<div class="glass rounded-2xl card-hover p-5 flex flex-col {categoryBreakdown.length === 0 ? 'md:col-span-1' : 'md:col-span-2'}">
+				<div class="glass rounded-2xl card-hover p-5 flex flex-col {categoryEntries.length === 0 ? 'md:col-span-1' : 'md:col-span-2'}">
 					<h3 class="text-fluid-xs font-medium text-muted-foreground mb-3">予算消化</h3>
 					<div class="flex-1 space-y-3 overflow-y-auto no-scrollbar">
 						{#each budgets as b}
@@ -153,7 +143,7 @@
 			{/if}
 
 			<!-- Recent expenses -->
-			<div class="glass rounded-2xl card-hover p-5 flex flex-col md:col-span-{categoryBreakdown.length > 0 ? '2' : '3'} md:row-span-{recentExpenses.length > 3 ? '2' : '1'}">
+			<div class="glass rounded-2xl card-hover p-5 flex flex-col md:col-span-{categoryEntries.length > 0 ? '2' : '3'} md:row-span-{recentExpenses.length > 3 ? '2' : '1'}">
 				<div class="flex items-center justify-between mb-3">
 					<h3 class="text-fluid-xs font-medium text-muted-foreground">最近の支出</h3>
 					<a href="/expenses" class="text-fluid-xs text-primary hover:underline">すべて見る</a>
