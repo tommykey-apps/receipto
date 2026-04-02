@@ -271,6 +271,7 @@ resource "aws_lambda_function" "pipeline" {
       DYNAMODB_TABLE         = aws_dynamodb_table.main.name
       BUDGET_ALERT_TOPIC_ARN = aws_sns_topic.alerts.arn
       RECEIPTS_BUCKET_US     = aws_s3_bucket.receipts_us.id
+      BEDROCK_MODEL_ID       = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
     }
   }
 
@@ -323,16 +324,11 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
       },
       {
         Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
+        Action = "bedrock:InvokeModel"
+        Resource = [
+          "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.*",
+          "arn:aws:bedrock:*::inference-profile/apac.anthropic.*",
         ]
-        Resource = "${aws_s3_bucket.receipts_us.arn}/*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = "textract:AnalyzeExpense"
-        Resource = "*"
       },
       {
         Effect = "Allow"
