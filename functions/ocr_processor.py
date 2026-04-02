@@ -8,8 +8,10 @@ import re
 
 import boto3
 
-bedrock = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
+bedrock = boto3.client("bedrock-runtime")
 s3 = boto3.client("s3")
+
+_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "apac.anthropic.claude-sonnet-4-20250514-v1:0")
 
 _PROMPT = """この画像は日本のレシートです。以下の情報をJSON形式で抽出してください。
 金額は整数（円単位）で返してください。
@@ -58,7 +60,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
 
     # Call Claude via Bedrock
     body = json.dumps({
-        "anthropic_version": "bedrock-2023-10-16",
+        "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": 512,
         "messages": [
             {
@@ -82,7 +84,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     })
 
     resp = bedrock.invoke_model(
-        modelId="anthropic.claude-sonnet-4-20250514",
+        modelId=_MODEL_ID,
         contentType="application/json",
         accept="application/json",
         body=body,
