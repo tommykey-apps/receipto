@@ -17,6 +17,8 @@ from moto import mock_aws
 
 _DYNAMODB_ENDPOINT = "http://localhost:8000"
 
+os.environ.setdefault("RECEIPTS_BUCKET_US", "test-receipts-us")
+
 
 def _dynamodb_local_available() -> bool:
     try:
