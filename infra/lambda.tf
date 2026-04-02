@@ -322,17 +322,9 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Resource = "${aws_s3_bucket.receipts.arn}/*"
       },
       {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-        ]
-        Resource = "${aws_s3_bucket.receipts_us.arn}/*"
-      },
-      {
         Effect   = "Allow"
-        Action   = "textract:AnalyzeExpense"
-        Resource = "*"
+        Action   = "bedrock:InvokeModel"
+        Resource = "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.*"
       },
       {
         Effect = "Allow"
