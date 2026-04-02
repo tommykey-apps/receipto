@@ -1,4 +1,4 @@
-.PHONY: help dev db db-admin api web test test-unit test-integration clean
+.PHONY: help dev db db-admin api web test test-unit test-integration docs clean
 
 -include .env
 export
@@ -42,6 +42,13 @@ test-integration: db ## Run integration tests (starts DynamoDB Local)
 	cd api && .venv/bin/python -m pytest tests/integration/ -v
 
 test: test-unit test-integration ## Run all tests
+
+# ── Docs ──
+
+docs: ## Generate OpenAPI spec and serve docs (http://localhost:9090)
+	cd api && .venv/bin/python generate_openapi.py ../docs/openapi.json
+	@echo "  Serving docs at http://localhost:9090"
+	cd docs && python3 -m http.server 9090
 
 # ── Cleanup ──
 

@@ -5,7 +5,11 @@ from routers import budgets, categories, expenses, receipts, summary
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Expense Tracker API", version="1.0.0")
+    app = FastAPI(
+        title="Receipto API",
+        version="1.0.0",
+        description="レシートOCR + 支出管理 + 予算アラートの家計簿API",
+    )
 
     app.add_middleware(
         CORSMiddleware,
