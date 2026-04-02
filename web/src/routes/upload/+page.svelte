@@ -4,6 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
+	import heic2any from 'heic2any';
 	import { getUploadUrl, getCategories, createExpense } from '$lib/api';
 	import { goto } from '$app/navigation';
 	import {
@@ -22,6 +23,7 @@
 	let categories = $state<any[]>([]);
 	let dragOver = $state(false);
 	let saveError = $state('');
+	let converting = $state(false);
 
 	let editForm = $state({
 		store_name: '',
@@ -68,13 +70,31 @@
 		}
 	}
 
-	function setFile(file: File) {
-		selectedFile = file;
+	async function setFile(file: File) {
+		const isHeic = file.type === 'image/heic' || file.type === 'image/heif' ||
+			/\.heic$/i.test(file.name) || /\.heif$/i.test(file.name);
+
+		if (isHeic) {
+			converting = true;
+			try {
+				const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 }) as Blob;
+				const converted = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+				selectedFile = converted;
+			} catch {
+				saveError = 'HEIC画像の変換に失敗しました';
+				converting = false;
+				return;
+			}
+			converting = false;
+		} else {
+			selectedFile = file;
+		}
+
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			preview = e.target?.result as string;
 		};
-		reader.readAsDataURL(file);
+		reader.readAsDataURL(selectedFile!);
 	}
 
 	async function handleUpload() {
@@ -169,10 +189,16 @@
 				</div>
 			</form>
 		</div>
-	{:else if upload.status === 'uploading' || upload.status === 'processing'}
-		<!-- Uploading / Processing state -->
+	{:else if converting || upload.status === 'uploading' || upload.status === 'processing'}
+		<!-- Converting / Uploading / Processing state -->
 		<div class="glass rounded-2xl flex flex-col items-center gap-6 py-16 animate-fade-up">
-			{#if upload.status === 'uploading'}
+			{#if converting}
+				<div class="relative flex items-center justify-center">
+					<div class="absolute h-14 w-14 rounded-full bg-primary/15 animate-pulse"></div>
+					<span class="relative text-4xl">🔄</span>
+				</div>
+				<p class="text-fluid-sm text-muted-foreground font-medium">HEIC → JPEG 変換中...</p>
+			{:else if upload.status === 'uploading'}
 				<div class="relative">
 					<Upload class="h-12 w-12 text-primary animate-bounce" />
 				</div>
@@ -194,7 +220,7 @@
 		<input
 			bind:this={fileInput}
 			type="file"
-			accept="image/*"
+			accept="image/*,.heic,.heif"
 			class="hidden"
 			onchange={handleFileSelect}
 		/>
