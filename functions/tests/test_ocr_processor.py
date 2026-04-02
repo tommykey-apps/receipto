@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import importlib
+import os
 from unittest.mock import patch
+
+import boto3
 
 from ocr_processor import _parse_amount
 
@@ -54,8 +57,26 @@ def _textract_response(vendor_name=None, total=None):
     }
 
 
-def test_handler_with_vendor_and_total(aws):
+def _setup_s3_buckets(monkeypatch):
+    """Create source (Tokyo) and destination (us-east-1) S3 buckets for moto."""
+    s3_tokyo = boto3.client("s3", region_name="ap-northeast-1")
+    s3_tokyo.create_bucket(
+        Bucket="test-bucket",
+        CreateBucketConfiguration={"LocationConstraint": "ap-northeast-1"},
+    )
+    s3_tokyo.put_object(Bucket="test-bucket", Key="receipts/r1.jpg", Body=b"fake-image")
+    s3_tokyo.put_object(Bucket="test-bucket", Key="receipts/r2.jpg", Body=b"fake-image")
+
+    s3_us = boto3.client("s3", region_name="us-east-1")
+    s3_us.create_bucket(Bucket="test-bucket-us")
+
+    monkeypatch.setenv("RECEIPTS_BUCKET_US", "test-bucket-us")
+
+
+def test_handler_with_vendor_and_total(aws, monkeypatch):
     """Textract returns VENDOR_NAME and TOTAL => ocr_success=True."""
+    _setup_s3_buckets(monkeypatch)
+
     import ocr_processor
     importlib.reload(ocr_processor)
 
@@ -74,8 +95,10 @@ def test_handler_with_vendor_and_total(aws):
     assert result["extracted"]["amount"] == 1500
 
 
-def test_handler_no_total(aws):
+def test_handler_no_total(aws, monkeypatch):
     """Textract returns no TOTAL => ocr_success=False."""
+    _setup_s3_buckets(monkeypatch)
+
     import ocr_processor
     importlib.reload(ocr_processor)
 
