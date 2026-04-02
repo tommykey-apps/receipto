@@ -7,8 +7,10 @@ import re
 
 import boto3
 
-# Lambda runs in us-east-1 alongside Textract — no cross-region needed
-textract = boto3.client("textract")
+# Lambda runs in ap-northeast-1, Textract AnalyzeExpense only in us-east-1
+textract = boto3.client("textract", region_name="us-east-1")
+s3 = boto3.client("s3")
+s3_us = boto3.client("s3", region_name="us-east-1")
 
 
 def _extract_field(expense_fields: list[dict], field_type: str) -> str | None:
@@ -31,13 +33,21 @@ def _parse_amount(raw: str | None) -> int | None:
 
 
 def handler(event: dict, context: object) -> dict:  # noqa: ARG001
+    bucket = event["bucket"]
     s3_key = event["s3_key"]
     receipt_id = event["receipt_id"]
     user_id = event["user_id"]
 
-    # Use the us-east-1 replica bucket (S3Object reference, 10MB limit)
-    us_bucket = os.environ.get("RECEIPTS_BUCKET_US", event.get("bucket", ""))
+    us_bucket = os.environ.get("RECEIPTS_BUCKET_US", "")
 
+    # Copy object from Tokyo bucket to us-east-1 bucket for Textract
+    s3_us.copy_object(
+        Bucket=us_bucket,
+        Key=s3_key,
+        CopySource={"Bucket": bucket, "Key": s3_key},
+    )
+
+    # Call Textract with S3Object reference (10MB limit, same-region)
     resp = textract.analyze_expense(
         Document={"S3Object": {"Bucket": us_bucket, "Name": s3_key}}
     )
@@ -63,7 +73,7 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     return {
         "receipt_id": receipt_id,
         "user_id": user_id,
-        "bucket": event.get("bucket", ""),
+        "bucket": bucket,
         "s3_key": s3_key,
         "extracted": {
             "store_name": store_name or "",
