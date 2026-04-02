@@ -243,9 +243,9 @@ resource "aws_iam_role_policy" "lambda_digest_ses" {
 # ── Receipt Pipeline Lambdas ──
 
 locals {
-  # Pipeline Lambdas deployed in ap-northeast-1 (ocr-processor is in us-east-1)
   pipeline_functions = {
     receipt-validator = { handler = "receipt_validator.handler", timeout = 30 }
+    ocr-processor     = { handler = "ocr_processor.handler", timeout = 60 }
     categorizer       = { handler = "categorizer.handler", timeout = 10 }
     expense-saver     = { handler = "expense_saver.handler", timeout = 30 }
     budget-checker    = { handler = "budget_checker.handler", timeout = 30 }
@@ -270,6 +270,7 @@ resource "aws_lambda_function" "pipeline" {
     variables = {
       DYNAMODB_TABLE         = aws_dynamodb_table.main.name
       BUDGET_ALERT_TOPIC_ARN = aws_sns_topic.alerts.arn
+      RECEIPTS_BUCKET_US     = aws_s3_bucket.receipts_us.id
     }
   }
 
@@ -323,6 +324,19 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
       {
         Effect = "Allow"
         Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+        ]
+        Resource = "${aws_s3_bucket.receipts_us.arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "textract:AnalyzeExpense"
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
@@ -342,78 +356,3 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
   })
 }
 
-# ── OCR Processor Lambda (us-east-1, alongside Textract) ──
-
-resource "aws_lambda_function" "ocr_processor" {
-  provider = aws.us_east_1
-
-  function_name = "${var.project}-ocr-processor"
-  role          = aws_iam_role.lambda_ocr.arn
-  handler       = "ocr_processor.handler"
-  runtime       = "python3.12"
-  timeout       = 60
-  memory_size   = 256
-
-  filename         = data.archive_file.pipeline_placeholder.output_path
-  source_code_hash = data.archive_file.pipeline_placeholder.output_base64sha256
-
-  environment {
-    variables = {
-      RECEIPTS_BUCKET_US = aws_s3_bucket.receipts_us.id
-    }
-  }
-
-  tags = {
-    Project = var.project
-  }
-}
-
-resource "aws_iam_role" "lambda_ocr" {
-  name = "${var.project}-lambda-ocr"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Project = var.project
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_ocr_basic" {
-  role       = aws_iam_role.lambda_ocr.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy" "lambda_ocr" {
-  name = "${var.project}-lambda-ocr"
-  role = aws_iam_role.lambda_ocr.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:HeadObject",
-        ]
-        Resource = "${aws_s3_bucket.receipts_us.arn}/*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = "textract:AnalyzeExpense"
-        Resource = "*"
-      }
-    ]
-  })
-}
