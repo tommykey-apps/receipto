@@ -128,6 +128,10 @@ class TestPipelineChain:
         mock_bedrock = MagicMock()
         mock_bedrock.invoke_model.return_value = {"body": io.BytesIO(mock_bedrock_body.encode())}
         mod_ocr.bedrock = mock_bedrock
+        # Mock S3 get_object (image download for Bedrock)
+        mock_s3 = MagicMock()
+        mock_s3.get_object.return_value = {"Body": io.BytesIO(b"fake-image")}
+        mod_ocr.s3 = mock_s3
 
         ocr_event = {
             "bucket": bucket,
