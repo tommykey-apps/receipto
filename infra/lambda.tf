@@ -327,7 +327,7 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Action = "bedrock:InvokeModel"
         Resource = [
           "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.*",
-          "arn:aws:bedrock:*::inference-profile/apac.anthropic.*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/apac.anthropic.*",
         ]
       },
       {
