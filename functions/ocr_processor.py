@@ -6,7 +6,9 @@ import re
 
 import boto3
 
-textract = boto3.client("textract")
+# Textract AnalyzeExpense is not available in ap-northeast-1, use us-east-1
+textract = boto3.client("textract", region_name="us-east-1")
+s3 = boto3.client("s3")
 
 
 def _extract_field(expense_fields: list[dict], field_type: str) -> str | None:
@@ -34,8 +36,12 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     receipt_id = event["receipt_id"]
     user_id = event["user_id"]
 
+    # Download from S3 (ap-northeast-1) and send bytes to Textract (us-east-1)
+    obj = s3.get_object(Bucket=bucket, Key=s3_key)
+    image_bytes = obj["Body"].read()
+
     resp = textract.analyze_expense(
-        Document={"S3Object": {"Bucket": bucket, "Name": s3_key}}
+        Document={"Bytes": image_bytes}
     )
 
     store_name = None
