@@ -9,6 +9,16 @@ data "archive_file" "lambda_placeholder" {
   }
 }
 
+data "archive_file" "pipeline_placeholder" {
+  type        = "zip"
+  output_path = "${path.module}/lambda-pipeline-placeholder.zip"
+
+  source {
+    content  = "# placeholder"
+    filename = "main.py"
+  }
+}
+
 data "archive_file" "digest_placeholder" {
   type        = "zip"
   output_path = "${path.module}/lambda-digest-placeholder.zip"
@@ -225,6 +235,113 @@ resource "aws_iam_role_policy" "lambda_digest_ses" {
         Effect   = "Allow"
         Action   = "ses:SendEmail"
         Resource = "*"
+      }
+    ]
+  })
+}
+
+# ── Receipt Pipeline Lambdas ──
+
+locals {
+  pipeline_functions = {
+    receipt-validator = { handler = "receipt_validator.handler", timeout = 30 }
+    ocr-processor     = { handler = "ocr_processor.handler", timeout = 60 }
+    categorizer       = { handler = "categorizer.handler", timeout = 10 }
+    expense-saver     = { handler = "expense_saver.handler", timeout = 30 }
+    budget-checker    = { handler = "budget_checker.handler", timeout = 30 }
+    notifier          = { handler = "notifier.handler", timeout = 30 }
+  }
+}
+
+resource "aws_lambda_function" "pipeline" {
+  for_each = local.pipeline_functions
+
+  function_name = "${var.project}-${each.key}"
+  role          = aws_iam_role.lambda_pipeline.arn
+  handler       = each.value.handler
+  runtime       = "python3.12"
+  timeout       = each.value.timeout
+  memory_size   = 128
+
+  filename         = data.archive_file.pipeline_placeholder.output_path
+  source_code_hash = data.archive_file.pipeline_placeholder.output_base64sha256
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE         = aws_dynamodb_table.main.name
+      BUDGET_ALERT_TOPIC_ARN = aws_sns_topic.alerts.arn
+    }
+  }
+
+  tags = {
+    Project = var.project
+  }
+}
+
+# IAM Role for Pipeline Lambdas (shared)
+resource "aws_iam_role" "lambda_pipeline" {
+  name = "${var.project}-lambda-pipeline"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Project = var.project
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_pipeline_basic" {
+  role       = aws_iam_role.lambda_pipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_pipeline" {
+  name = "${var.project}-lambda-pipeline"
+  role = aws_iam_role.lambda_pipeline.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:HeadObject",
+        ]
+        Resource = "${aws_s3_bucket.receipts.arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "textract:AnalyzeExpense"
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+        ]
+        Resource = [
+          aws_dynamodb_table.main.arn,
+          "${aws_dynamodb_table.main.arn}/index/*",
+        ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = aws_sns_topic.alerts.arn
       }
     ]
   })
