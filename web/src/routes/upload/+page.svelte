@@ -1,20 +1,27 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Camera, Upload, Check } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
-	import { getUploadUrl, getReceipt, getCategories, createExpense } from '$lib/api';
+	import { getUploadUrl, getCategories, createExpense } from '$lib/api';
 	import { goto } from '$app/navigation';
+	import {
+		getUploadState,
+		setUploading,
+		startPolling,
+		resumePollingIfNeeded,
+		resetUpload
+	} from '$lib/stores/upload.svelte';
+
+	const upload = getUploadState();
 
 	let fileInput = $state<HTMLInputElement | null>(null);
 	let preview = $state<string | null>(null);
 	let selectedFile = $state<File | null>(null);
-	let uploading = $state(false);
-	let processing = $state(false);
-	let ocrResult = $state<any>(null);
 	let categories = $state<any[]>([]);
 	let dragOver = $state(false);
-	let error = $state('');
+	let saveError = $state('');
 
 	let editForm = $state({
 		store_name: '',
@@ -23,12 +30,27 @@
 		memo: ''
 	});
 
-	$effect(() => {
+	onMount(() => {
 		getCategories()
 			.then((data) => {
 				categories = Array.isArray(data) ? data : data?.items ?? [];
 			})
 			.catch(() => {});
+
+		// Resume polling if we navigated away during processing
+		resumePollingIfNeeded();
+	});
+
+	// Sync OCR result to edit form when completed
+	$effect(() => {
+		if (upload.status === 'completed' && upload.result) {
+			editForm = {
+				store_name: upload.result.store_name ?? '',
+				amount: upload.result.amount ?? 0,
+				category: upload.result.category ?? '',
+				memo: ''
+			};
+		}
 	});
 
 	function handleFileSelect(e: Event) {
@@ -57,8 +79,7 @@
 
 	async function handleUpload() {
 		if (!selectedFile) return;
-		error = '';
-		uploading = true;
+		setUploading();
 		try {
 			const { upload_url, receipt_id } = await getUploadUrl(selectedFile.name);
 			await fetch(upload_url, {
@@ -66,61 +87,29 @@
 				body: selectedFile,
 				headers: { 'Content-Type': selectedFile.type }
 			});
-			uploading = false;
-			processing = true;
-			await pollReceipt(receipt_id);
+			startPolling(receipt_id);
 		} catch (e: any) {
-			error = e.message || 'アップロードに失敗しました';
-			uploading = false;
+			resetUpload();
+			saveError = e.message || 'アップロードに失敗しました';
 		}
-	}
-
-	async function pollReceipt(receiptId: string) {
-		const maxAttempts = 30;
-		for (let i = 0; i < maxAttempts; i++) {
-			await new Promise((r) => setTimeout(r, 2000));
-			try {
-				const receipt = await getReceipt(receiptId);
-				if (receipt.status === 'completed') {
-					ocrResult = receipt;
-					editForm = {
-						store_name: receipt.store_name ?? '',
-						amount: receipt.amount ?? 0,
-						category: receipt.category ?? '',
-						memo: ''
-					};
-					processing = false;
-					return;
-				}
-				if (receipt.status === 'failed') {
-					error = 'OCR処理に失敗しました';
-					processing = false;
-					return;
-				}
-			} catch {
-				// keep polling
-			}
-		}
-		error = 'タイムアウトしました';
-		processing = false;
 	}
 
 	async function handleSave() {
+		saveError = '';
 		try {
 			await createExpense(editForm);
+			resetUpload();
 			goto('/expenses');
 		} catch (e: any) {
-			error = e.message || '保存に失敗しました';
+			saveError = e.message || '保存に失敗しました';
 		}
 	}
 
-	function reset() {
+	function handleReset() {
+		resetUpload();
 		preview = null;
 		selectedFile = null;
-		ocrResult = null;
-		error = '';
-		uploading = false;
-		processing = false;
+		saveError = '';
 	}
 </script>
 
@@ -128,13 +117,13 @@
 	<!-- Page header -->
 	<h1 class="text-fluid-xl font-bold tracking-tight animate-fade-up">レシート撮影</h1>
 
-	{#if error}
+	{#if upload.error || saveError}
 		<div class="glass rounded-2xl border-destructive/20 bg-destructive/5 p-4 text-fluid-sm text-destructive animate-fade-up">
-			{error}
+			{upload.error || saveError}
 		</div>
 	{/if}
 
-	{#if ocrResult}
+	{#if upload.status === 'completed'}
 		<!-- OCR result form -->
 		<div class="glass rounded-2xl p-6 animate-fade-up space-y-6">
 			<div class="flex items-center gap-3">
@@ -174,16 +163,16 @@
 						<Check class="h-4 w-4" />
 						保存する
 					</Button>
-					<Button type="button" variant="outline" class="rounded-xl text-fluid-sm" onclick={reset}>
+					<Button type="button" variant="outline" class="rounded-xl text-fluid-sm" onclick={handleReset}>
 						やり直し
 					</Button>
 				</div>
 			</form>
 		</div>
-	{:else if uploading || processing}
+	{:else if upload.status === 'uploading' || upload.status === 'processing'}
 		<!-- Uploading / Processing state -->
 		<div class="glass rounded-2xl flex flex-col items-center gap-6 py-16 animate-fade-up">
-			{#if uploading}
+			{#if upload.status === 'uploading'}
 				<div class="relative">
 					<Upload class="h-12 w-12 text-primary animate-bounce" />
 				</div>
@@ -221,7 +210,7 @@
 						<Upload class="h-4 w-4" />
 						アップロード
 					</Button>
-					<Button variant="outline" class="rounded-xl text-fluid-sm" onclick={reset}>
+					<Button variant="outline" class="rounded-xl text-fluid-sm" onclick={handleReset}>
 						撮り直し
 					</Button>
 				</div>
