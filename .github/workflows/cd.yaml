@@ -35,6 +35,8 @@ jobs:
           cd infra
           terraform init
           terraform apply -input=false -auto-approve
+        env:
+          TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
 
   deploy-api:
     runs-on: ubuntu-latest
