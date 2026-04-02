@@ -136,6 +136,9 @@ class TestPipelineChain:
         mock_textract = MagicMock()
         mock_textract.analyze_expense.return_value = mock_textract_response
         mod_ocr.textract = mock_textract
+        # Mock cross-region S3 copy (us-east-1 bucket doesn't exist in test)
+        mock_s3_us = MagicMock()
+        mod_ocr.s3_us = mock_s3_us
 
         ocr_event = {
             "bucket": bucket,
