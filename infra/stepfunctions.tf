@@ -45,7 +45,7 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
         Type     = "Task"
         Resource = "arn:aws:states:::lambda:invoke"
         Parameters = {
-          "FunctionName" = aws_lambda_function.pipeline["ocr-processor"].arn
+          "FunctionName" = aws_lambda_function.ocr_processor.arn
           "Payload.$"    = "$"
         }
         ResultPath  = "$"
@@ -179,7 +179,10 @@ resource "aws_iam_role_policy" "stepfunctions" {
       {
         Effect   = "Allow"
         Action   = "lambda:InvokeFunction"
-        Resource = [for fn in aws_lambda_function.pipeline : fn.arn]
+        Resource = concat(
+          [for fn in aws_lambda_function.pipeline : fn.arn],
+          [aws_lambda_function.ocr_processor.arn]
+        )
       },
       {
         Effect = "Allow"
