@@ -85,13 +85,20 @@ jobs:
           cp *.py package/
           cd package && zip -r9 ../pipeline.zip . -q
 
-      - name: Deploy Pipeline Lambdas
+      - name: Deploy Pipeline Lambdas (ap-northeast-1)
         run: |
-          for fn in receipt-validator ocr-processor categorizer expense-saver budget-checker notifier; do
+          for fn in receipt-validator categorizer expense-saver budget-checker notifier; do
             aws lambda update-function-code \
               --function-name expense-tracker-$fn \
               --zip-file fileb://functions/pipeline.zip
           done
+
+      - name: Deploy OCR Lambda (us-east-1)
+        run: |
+          aws lambda update-function-code \
+            --function-name expense-tracker-ocr-processor \
+            --zip-file fileb://functions/pipeline.zip \
+            --region us-east-1
 
   deploy-web:
     runs-on: ubuntu-latest
