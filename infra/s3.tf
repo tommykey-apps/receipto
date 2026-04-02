@@ -176,6 +176,10 @@ resource "aws_s3_bucket_replication_configuration" "receipts" {
       prefix = "uploads/"
     }
 
+    delete_marker_replication {
+      status = "Disabled"
+    }
+
     destination {
       bucket        = aws_s3_bucket.receipts_us.arn
       storage_class = "STANDARD"
