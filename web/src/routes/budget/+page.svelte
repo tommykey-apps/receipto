@@ -172,8 +172,8 @@
 		</div>
 
 		<!-- Save button: sticky on mobile, inline on desktop -->
-		<div class="fixed bottom-0 inset-x-0 p-4 md:static md:p-0 z-10">
-			<div class="md:hidden absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none"></div>
+		<div class="fixed bottom-20 inset-x-0 px-4 pb-2 md:static md:p-0 z-10">
+			<div class="md:hidden absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none rounded-xl"></div>
 			<Button
 				class="relative w-full rounded-xl py-3 text-fluid-base font-semibold active:scale-[0.98] transition-transform"
 				onclick={handleSave}
