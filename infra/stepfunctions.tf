@@ -1,46 +1,143 @@
-# Step Functions Express Workflow for receipt processing
+# Step Functions for receipt processing pipeline
 resource "aws_sfn_state_machine" "receipt_pipeline" {
   name     = "${var.project}-receipt-pipeline"
   role_arn = aws_iam_role.stepfunctions.arn
-  type     = "EXPRESS"
+  type     = "STANDARD"
 
   definition = jsonencode({
-    Comment = "Receipt processing pipeline"
-    StartAt = "AnalyzeReceipt"
+    Comment = "Receipt OCR pipeline: validate → OCR → categorize → save → budget check → notify"
+    StartAt = "ParseS3Key"
     States = {
-      AnalyzeReceipt = {
-        Type     = "Task"
-        Resource = "arn:aws:states:::aws-sdk:textract:analyzeExpense"
+      ParseS3Key = {
+        Type = "Pass"
         Parameters = {
-          "Document" = {
-            "S3Object" = {
-              "Bucket.$" = "$.bucket"
-              "Name.$"   = "$.key"
-            }
-          }
+          "bucket.$"     = "$.bucket"
+          "s3_key.$"     = "$.key"
+          "user_id.$"    = "States.ArrayGetItem(States.StringSplit($.key, '/'), 1)"
+          "receipt_id.$" = "States.ArrayGetItem(States.StringSplit($.key, '/'), 2)"
         }
-        Next = "SaveExpense"
+        Next = "ValidateReceipt"
+      }
+      ValidateReceipt = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          "FunctionName" = aws_lambda_function.pipeline["receipt-validator"].arn
+          "Payload.$"    = "$"
+        }
+        ResultPath  = "$"
+        ResultSelector = { "result.$" = "$.Payload" }
+        OutputPath  = "$.result"
+        Next        = "CheckValid"
+      }
+      CheckValid = {
+        Type = "Choice"
+        Choices = [
+          {
+            Variable     = "$.valid"
+            BooleanEquals = false
+            Next         = "MarkFailed"
+          }
+        ]
+        Default = "ProcessOCR"
+      }
+      ProcessOCR = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          "FunctionName" = aws_lambda_function.pipeline["ocr-processor"].arn
+          "Payload.$"    = "$"
+        }
+        ResultPath  = "$"
+        ResultSelector = { "result.$" = "$.Payload" }
+        OutputPath  = "$.result"
+        Next        = "CheckOCR"
+      }
+      CheckOCR = {
+        Type = "Choice"
+        Choices = [
+          {
+            Variable      = "$.ocr_success"
+            BooleanEquals = false
+            Next          = "MarkFailed"
+          }
+        ]
+        Default = "Categorize"
+      }
+      Categorize = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          "FunctionName" = aws_lambda_function.pipeline["categorizer"].arn
+          "Payload.$"    = "$"
+        }
+        ResultPath  = "$"
+        ResultSelector = { "result.$" = "$.Payload" }
+        OutputPath  = "$.result"
+        Next        = "SaveExpense"
       }
       SaveExpense = {
         Type     = "Task"
-        Resource = "arn:aws:states:::dynamodb:putItem"
+        Resource = "arn:aws:states:::lambda:invoke"
         Parameters = {
-          "TableName" = aws_dynamodb_table.main.name
-          "Item" = {
-            "pk" = { "S.$" = "$.userId" }
-            "sk" = { "S.$" = "$.expenseId" }
-          }
+          "FunctionName" = aws_lambda_function.pipeline["expense-saver"].arn
+          "Payload.$"    = "$"
         }
-        Next = "NotifyUser"
+        ResultPath  = "$"
+        ResultSelector = { "result.$" = "$.Payload" }
+        OutputPath  = "$.result"
+        Next        = "CheckBudget"
       }
-      NotifyUser = {
+      CheckBudget = {
         Type     = "Task"
-        Resource = "arn:aws:states:::sns:publish"
+        Resource = "arn:aws:states:::lambda:invoke"
         Parameters = {
-          "TopicArn" = aws_sns_topic.alerts.arn
-          "Message.$" = "$.message"
+          "FunctionName" = aws_lambda_function.pipeline["budget-checker"].arn
+          "Payload.$"    = "$"
+        }
+        ResultPath  = "$"
+        ResultSelector = { "result.$" = "$.Payload" }
+        OutputPath  = "$.result"
+        Next        = "CheckExceeded"
+      }
+      CheckExceeded = {
+        Type = "Choice"
+        Choices = [
+          {
+            Variable      = "$.budget_exceeded"
+            BooleanEquals = true
+            Next          = "Notify"
+          }
+        ]
+        Default = "Done"
+      }
+      Notify = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          "FunctionName" = aws_lambda_function.pipeline["notifier"].arn
+          "Payload.$"    = "$"
+        }
+        ResultPath = "$.notify_result"
+        End        = true
+      }
+      MarkFailed = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::dynamodb:updateItem"
+        Parameters = {
+          "TableName"  = aws_dynamodb_table.main.name
+          "Key" = {
+            "pk" = { "S.$" = "States.Format('USER#{}', $.user_id)" }
+            "sk" = { "S.$" = "States.Format('RCV#{}', $.receipt_id)" }
+          }
+          "UpdateExpression"          = "SET #s = :failed"
+          "ExpressionAttributeNames"  = { "#s" = "status" }
+          "ExpressionAttributeValues" = { ":failed" = { "S" = "failed" } }
         }
         End = true
+      }
+      Done = {
+        Type = "Succeed"
       }
     }
   })
@@ -80,34 +177,16 @@ resource "aws_iam_role_policy" "stepfunctions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = [
-          "textract:AnalyzeExpense",
-        ]
-        Resource = "*"
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = [for fn in aws_lambda_function.pipeline : fn.arn]
       },
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:PutItem",
           "dynamodb:UpdateItem",
         ]
         Resource = aws_dynamodb_table.main.arn
-      },
-      {
-        Effect   = "Allow"
-        Action   = "sns:Publish"
-        Resource = aws_sns_topic.alerts.arn
-      },
-      {
-        Effect   = "Allow"
-        Action   = "lambda:InvokeFunction"
-        Resource = aws_lambda_function.api.arn
-      },
-      {
-        Effect = "Allow"
-        Action = "s3:GetObject"
-        Resource = "${aws_s3_bucket.receipts.arn}/*"
       }
     ]
   })

@@ -39,6 +39,7 @@ jobs:
           TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
 
   deploy-api:
+    needs: deploy-infra
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,6 +77,21 @@ jobs:
           aws lambda update-function-code \
             --function-name expense-tracker-digest \
             --zip-file fileb://digest.zip
+
+      - name: Package Pipeline Lambdas
+        run: |
+          cd functions
+          pip install boto3 python-ulid python-dateutil -t package/
+          cp *.py package/
+          cd package && zip -r9 ../pipeline.zip . -q
+
+      - name: Deploy Pipeline Lambdas
+        run: |
+          for fn in receipt-validator ocr-processor categorizer expense-saver budget-checker notifier; do
+            aws lambda update-function-code \
+              --function-name expense-tracker-$fn \
+              --zip-file fileb://functions/pipeline.zip
+          done
 
   deploy-web:
     runs-on: ubuntu-latest
