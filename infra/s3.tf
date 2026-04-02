@@ -53,6 +53,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "receipts" {
   }
 }
 
+# S3 → EventBridge notifications (for Step Functions trigger)
+resource "aws_s3_bucket_notification" "receipts" {
+  bucket      = aws_s3_bucket.receipts.id
+  eventbridge = true
+}
+
 # Frontend bucket
 resource "aws_s3_bucket" "frontend" {
   bucket        = "${var.project}-frontend-${data.aws_caller_identity.current.account_id}"

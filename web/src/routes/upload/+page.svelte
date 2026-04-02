@@ -206,7 +206,6 @@
 			bind:this={fileInput}
 			type="file"
 			accept="image/*"
-			capture="environment"
 			class="hidden"
 			onchange={handleFileSelect}
 		/>
