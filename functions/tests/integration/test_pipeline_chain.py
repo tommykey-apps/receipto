@@ -7,6 +7,8 @@ Textract is mocked since there's no local Textract service.
 from __future__ import annotations
 
 import importlib
+import io
+import json
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -112,33 +114,24 @@ class TestPipelineChain:
 
         assert validator_result["valid"] is True
 
-        # Step 2: ocr_processor (mock textract)
-        mock_textract_response = {
-            "ExpenseDocuments": [{
-                "SummaryFields": [
-                    {
-                        "Type": {"Text": "VENDOR_NAME"},
-                        "ValueDetection": {"Text": "セブンイレブン"},
-                    },
-                    {
-                        "Type": {"Text": "TOTAL"},
-                        "ValueDetection": {"Text": "¥1,280"},
-                    },
-                    {
-                        "Type": {"Text": "INVOICE_RECEIPT_DATE"},
-                        "ValueDetection": {"Text": "2025-03-15"},
-                    },
-                ],
-            }],
-        }
+        # Step 2: ocr_processor (mock Bedrock Claude)
+        import io
+        mock_bedrock_body = json.dumps({
+            "content": [{"type": "text", "text": json.dumps({
+                "store_name": "セブンイレブン",
+                "amount": 1280,
+                "date": "2025-03-15",
+            })}],
+        })
 
         mod_ocr = _reload_lambda_module("ocr_processor")
-        mock_textract = MagicMock()
-        mock_textract.analyze_expense.return_value = mock_textract_response
-        mod_ocr.textract = mock_textract
-        # Mock cross-region S3 copy (us-east-1 bucket doesn't exist in test)
-        mock_s3_us = MagicMock()
-        mod_ocr.s3_us = mock_s3_us
+        mock_bedrock = MagicMock()
+        mock_bedrock.invoke_model.return_value = {"body": io.BytesIO(mock_bedrock_body.encode())}
+        mod_ocr.bedrock = mock_bedrock
+        # Mock S3 get_object (image download for Bedrock)
+        mock_s3 = MagicMock()
+        mock_s3.get_object.return_value = {"Body": io.BytesIO(b"fake-image")}
+        mod_ocr.s3 = mock_s3
 
         ocr_event = {
             "bucket": bucket,

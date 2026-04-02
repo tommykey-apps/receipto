@@ -1,31 +1,38 @@
-"""Extract expense data from receipt using Amazon Textract AnalyzeExpense."""
+"""Extract expense data from receipt using Claude Vision via Amazon Bedrock."""
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 import re
 
 import boto3
 
-# Lambda runs in ap-northeast-1, Textract AnalyzeExpense only in us-east-1
-textract = boto3.client("textract", region_name="us-east-1")
+bedrock = boto3.client("bedrock-runtime")
 s3 = boto3.client("s3")
-s3_us = boto3.client("s3", region_name="us-east-1")
+
+_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "apac.anthropic.claude-sonnet-4-20250514-v1:0")
+
+_PROMPT = """この画像は日本のレシートです。以下の情報をJSON形式で抽出してください。
+金額は整数（円単位）で返してください。
+
+{
+  "store_name": "店名",
+  "amount": 合計金額（税込）の整数,
+  "date": "YYYY-MM-DD形式の日付"
+}
+
+読み取れない項目はnullにしてください。JSONのみを返し、他のテキストは含めないでください。"""
 
 
-def _extract_field(expense_fields: list[dict], field_type: str) -> str | None:
-    for field in expense_fields:
-        ft = field.get("Type", {}).get("Text", "")
-        if ft == field_type:
-            return field.get("ValueDetection", {}).get("Text")
-    return None
-
-
-def _parse_amount(raw: str | None) -> int | None:
-    """Parse amount string to integer yen value."""
-    if not raw:
+def _parse_amount(raw: str | int | float | None) -> int | None:
+    """Parse amount to integer yen value."""
+    if raw is None:
         return None
-    cleaned = re.sub(r"[¥￥,、円\s]", "", raw)
+    if isinstance(raw, (int, float)):
+        return int(raw)
+    cleaned = re.sub(r"[¥￥,、円\s]", "", str(raw))
     try:
         return int(float(cleaned))
     except ValueError:
@@ -38,37 +45,70 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
     receipt_id = event["receipt_id"]
     user_id = event["user_id"]
 
-    us_bucket = os.environ.get("RECEIPTS_BUCKET_US", "")
+    # Download image from S3
+    obj = s3.get_object(Bucket=bucket, Key=s3_key)
+    image_bytes = obj["Body"].read()
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
-    # Copy object from Tokyo bucket to us-east-1 bucket for Textract
-    s3_us.copy_object(
-        Bucket=us_bucket,
-        Key=s3_key,
-        CopySource={"Bucket": bucket, "Key": s3_key},
+    # Determine media type
+    lower_key = s3_key.lower()
+    if lower_key.endswith(".png"):
+        media_type = "image/png"
+    elif lower_key.endswith(".webp"):
+        media_type = "image/webp"
+    else:
+        media_type = "image/jpeg"
+
+    # Call Claude via Bedrock
+    body = json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 512,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_b64,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": _PROMPT,
+                    },
+                ],
+            }
+        ],
+    })
+
+    resp = bedrock.invoke_model(
+        modelId=_MODEL_ID,
+        contentType="application/json",
+        accept="application/json",
+        body=body,
     )
 
-    # Call Textract with S3Object reference (10MB limit, same-region)
-    resp = textract.analyze_expense(
-        Document={"S3Object": {"Bucket": us_bucket, "Name": s3_key}}
-    )
+    result_body = json.loads(resp["body"].read())
+    text = result_body["content"][0]["text"]
 
+    # Parse JSON from Claude's response
     store_name = None
     total_amount = None
     date = None
 
-    for doc in resp.get("ExpenseDocuments", []):
-        summary_fields = doc.get("SummaryFields", [])
-        vendor = _extract_field(summary_fields, "VENDOR_NAME")
-        if vendor:
-            store_name = vendor
-
-        total = _extract_field(summary_fields, "TOTAL")
-        if total:
-            total_amount = _parse_amount(total)
-
-        invoice_date = _extract_field(summary_fields, "INVOICE_RECEIPT_DATE")
-        if invoice_date:
-            date = invoice_date
+    try:
+        # Extract JSON from response (Claude might wrap it in markdown)
+        json_match = re.search(r"\{[^{}]+\}", text, re.DOTALL)
+        if json_match:
+            data = json.loads(json_match.group())
+            store_name = data.get("store_name")
+            total_amount = _parse_amount(data.get("amount"))
+            date = data.get("date")
+    except (json.JSONDecodeError, AttributeError):
+        pass
 
     return {
         "receipt_id": receipt_id,
