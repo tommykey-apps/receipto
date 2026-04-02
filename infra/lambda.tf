@@ -323,12 +323,29 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Resource = "${aws_s3_bucket.receipts.arn}/*"
       },
       {
+        Sid    = "BedrockInferenceProfile"
         Effect = "Allow"
         Action = "bedrock:InvokeModel"
         Resource = [
-          "arn:aws:bedrock:*::foundation-model/anthropic.*",
-          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/apac.anthropic.*",
+          "arn:aws:bedrock:ap-northeast-1:${data.aws_caller_identity.current.account_id}:inference-profile/apac.anthropic.*",
         ]
+      },
+      {
+        Sid    = "BedrockFoundationModelAPAC"
+        Effect = "Allow"
+        Action = "bedrock:InvokeModel"
+        Resource = [
+          for region in [
+            "ap-northeast-1", "ap-northeast-2", "ap-northeast-3",
+            "ap-south-1", "ap-south-2",
+            "ap-southeast-1", "ap-southeast-2", "ap-southeast-4",
+          ] : "arn:aws:bedrock:${region}::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0"
+        ]
+        Condition = {
+          StringEquals = {
+            "bedrock:InferenceProfileArn" = "arn:aws:bedrock:ap-northeast-1:${data.aws_caller_identity.current.account_id}:inference-profile/apac.anthropic.claude-sonnet-4-20250514-v1:0"
+          }
+        }
       },
       {
         Effect = "Allow"
