@@ -6,8 +6,9 @@
 	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '$lib/components/ui/dialog';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import ExpenseCard from '$lib/components/ExpenseCard.svelte';
+	import { toast } from 'svelte-sonner';
 	import { getExpenses, getCategories, createExpense, deleteExpense } from '$lib/api';
-	import { getCurrentMonth } from '$lib/utils';
+	import { getCurrentMonth, formatCurrency } from '$lib/utils';
 
 	let expenses = $state<any[]>([]);
 	let categories = $state<any[]>([]);
@@ -56,9 +57,29 @@
 		}
 	}
 
-	async function handleDelete(id: string) {
-		await deleteExpense(id);
-		await loadData();
+	function handleDelete(id: string) {
+		const backup = expenses.find(e => e.id === id);
+		if (!backup) return;
+
+		// Optimistic removal
+		expenses = expenses.filter(e => e.id !== id);
+
+		let undone = false;
+		toast(`${backup.store_name} ${formatCurrency(backup.amount)} を削除しました`, {
+			action: {
+				label: '元に戻す',
+				onClick: () => {
+					undone = true;
+					expenses = [...expenses, backup].sort((a, b) => b.created_at.localeCompare(a.created_at));
+				}
+			},
+			duration: 8000,
+			onAutoClose: async () => {
+				if (!undone) {
+					await deleteExpense(id);
+				}
+			},
+		});
 	}
 
 	function handleMonthChange() {
@@ -168,8 +189,8 @@
 		</div>
 	{:else}
 		<div class="space-y-2 stagger">
-			{#each expenses as expense}
-				<ExpenseCard {expense} />
+			{#each expenses as expense (expense.id)}
+				<ExpenseCard {expense} ondelete={handleDelete} />
 			{/each}
 		</div>
 	{/if}
