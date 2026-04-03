@@ -80,12 +80,18 @@ def handler(event: dict, context: object) -> dict:  # noqa: ARG001
             }
         )
 
-    # Update receipt status
+    # Update receipt status with OCR results
     table.update_item(
         Key={"pk": f"USER#{user_id}", "sk": f"RCV#{receipt_id}"},
-        UpdateExpression="SET #status = :s, expense_id = :eid",
+        UpdateExpression="SET #status = :s, expense_id = :eid, store_name = :sn, amount = :amt, category = :cat",
         ExpressionAttributeNames={"#status": "status"},
-        ExpressionAttributeValues={":s": "completed", ":eid": expense_id},
+        ExpressionAttributeValues={
+            ":s": "completed",
+            ":eid": expense_id,
+            ":sn": extracted.get("store_name", ""),
+            ":amt": amount,
+            ":cat": category,
+        },
     )
 
     return {
