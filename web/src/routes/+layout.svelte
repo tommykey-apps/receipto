@@ -5,6 +5,7 @@
 	import { initAuth, getAuthState } from '$lib/stores/auth.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+	import { Toaster } from '$lib/components/ui/sonner';
 
 	let { children } = $props();
 
@@ -26,6 +27,8 @@
 		document.documentElement.classList.add('dark');
 	});
 </script>
+
+<Toaster />
 
 <svelte:head>
 	<title>Receipto</title>
