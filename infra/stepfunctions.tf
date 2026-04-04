@@ -5,7 +5,7 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
   type     = "STANDARD"
 
   definition = jsonencode({
-    Comment = "Receipt OCR pipeline: validate → OCR → categorize → save → budget check → notify"
+    Comment = "Receipt OCR pipeline: validate → OCR → categorize → save OCR result to receipt"
     StartAt = "ParseS3Key"
     States = {
       ParseS3Key = {
@@ -86,40 +86,7 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
         ResultPath  = "$"
         ResultSelector = { "result.$" = "$.Payload" }
         OutputPath  = "$.result"
-        Next        = "CheckBudget"
-      }
-      CheckBudget = {
-        Type     = "Task"
-        Resource = "arn:aws:states:::lambda:invoke"
-        Parameters = {
-          "FunctionName" = aws_lambda_function.pipeline["budget-checker"].arn
-          "Payload.$"    = "$"
-        }
-        ResultPath  = "$"
-        ResultSelector = { "result.$" = "$.Payload" }
-        OutputPath  = "$.result"
-        Next        = "CheckExceeded"
-      }
-      CheckExceeded = {
-        Type = "Choice"
-        Choices = [
-          {
-            Variable      = "$.budget_exceeded"
-            BooleanEquals = true
-            Next          = "Notify"
-          }
-        ]
-        Default = "Done"
-      }
-      Notify = {
-        Type     = "Task"
-        Resource = "arn:aws:states:::lambda:invoke"
-        Parameters = {
-          "FunctionName" = aws_lambda_function.pipeline["notifier"].arn
-          "Payload.$"    = "$"
-        }
-        ResultPath = "$.notify_result"
-        End        = true
+        End         = true
       }
       MarkFailed = {
         Type     = "Task"
@@ -135,9 +102,6 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
           "ExpressionAttributeValues" = { ":failed" = { "S" = "failed" } }
         }
         End = true
-      }
-      Done = {
-        Type = "Succeed"
       }
     }
   })
