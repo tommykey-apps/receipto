@@ -5,7 +5,7 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
   type     = "STANDARD"
 
   definition = jsonencode({
-    Comment = "Receipt OCR pipeline: validate → OCR → categorize → save → budget check → notify"
+    Comment = "Receipt OCR pipeline: validate → OCR → categorize → save OCR result"
     StartAt = "ParseS3Key"
     States = {
       ParseS3Key = {
@@ -25,18 +25,18 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
           "FunctionName" = aws_lambda_function.pipeline["receipt-validator"].arn
           "Payload.$"    = "$"
         }
-        ResultPath  = "$"
+        ResultPath     = "$"
         ResultSelector = { "result.$" = "$.Payload" }
-        OutputPath  = "$.result"
-        Next        = "CheckValid"
+        OutputPath     = "$.result"
+        Next           = "CheckValid"
       }
       CheckValid = {
         Type = "Choice"
         Choices = [
           {
-            Variable     = "$.valid"
+            Variable      = "$.valid"
             BooleanEquals = false
-            Next         = "MarkFailed"
+            Next          = "MarkFailed"
           }
         ]
         Default = "ProcessOCR"
@@ -48,10 +48,10 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
           "FunctionName" = aws_lambda_function.pipeline["ocr-processor"].arn
           "Payload.$"    = "$"
         }
-        ResultPath  = "$"
+        ResultPath     = "$"
         ResultSelector = { "result.$" = "$.Payload" }
-        OutputPath  = "$.result"
-        Next        = "CheckOCR"
+        OutputPath     = "$.result"
+        Next           = "CheckOCR"
       }
       CheckOCR = {
         Type = "Choice"
@@ -71,61 +71,28 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
           "FunctionName" = aws_lambda_function.pipeline["categorizer"].arn
           "Payload.$"    = "$"
         }
-        ResultPath  = "$"
+        ResultPath     = "$"
         ResultSelector = { "result.$" = "$.Payload" }
-        OutputPath  = "$.result"
-        Next        = "SaveExpense"
+        OutputPath     = "$.result"
+        Next           = "SaveOCRResult"
       }
-      SaveExpense = {
+      SaveOCRResult = {
         Type     = "Task"
         Resource = "arn:aws:states:::lambda:invoke"
         Parameters = {
           "FunctionName" = aws_lambda_function.pipeline["expense-saver"].arn
           "Payload.$"    = "$"
         }
-        ResultPath  = "$"
+        ResultPath     = "$"
         ResultSelector = { "result.$" = "$.Payload" }
-        OutputPath  = "$.result"
-        Next        = "CheckBudget"
-      }
-      CheckBudget = {
-        Type     = "Task"
-        Resource = "arn:aws:states:::lambda:invoke"
-        Parameters = {
-          "FunctionName" = aws_lambda_function.pipeline["budget-checker"].arn
-          "Payload.$"    = "$"
-        }
-        ResultPath  = "$"
-        ResultSelector = { "result.$" = "$.Payload" }
-        OutputPath  = "$.result"
-        Next        = "CheckExceeded"
-      }
-      CheckExceeded = {
-        Type = "Choice"
-        Choices = [
-          {
-            Variable      = "$.budget_exceeded"
-            BooleanEquals = true
-            Next          = "Notify"
-          }
-        ]
-        Default = "Done"
-      }
-      Notify = {
-        Type     = "Task"
-        Resource = "arn:aws:states:::lambda:invoke"
-        Parameters = {
-          "FunctionName" = aws_lambda_function.pipeline["notifier"].arn
-          "Payload.$"    = "$"
-        }
-        ResultPath = "$.notify_result"
-        End        = true
+        OutputPath     = "$.result"
+        End            = true
       }
       MarkFailed = {
         Type     = "Task"
         Resource = "arn:aws:states:::dynamodb:updateItem"
         Parameters = {
-          "TableName"  = aws_dynamodb_table.main.name
+          "TableName" = aws_dynamodb_table.main.name
           "Key" = {
             "pk" = { "S.$" = "States.Format('USER#{}', $.user_id)" }
             "sk" = { "S.$" = "States.Format('RCV#{}', $.receipt_id)" }
@@ -135,9 +102,6 @@ resource "aws_sfn_state_machine" "receipt_pipeline" {
           "ExpressionAttributeValues" = { ":failed" = { "S" = "failed" } }
         }
         End = true
-      }
-      Done = {
-        Type = "Succeed"
       }
     }
   })
