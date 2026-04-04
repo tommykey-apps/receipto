@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import heic2any from 'heic2any';
-	import { getUploadUrl, getCategories, createExpense } from '$lib/api';
+	import { getUploadUrl, getCategories, updateExpense } from '$lib/api';
 	import { goto } from '$app/navigation';
 	import {
 		getUploadState,
@@ -117,7 +117,10 @@
 	async function handleSave() {
 		saveError = '';
 		try {
-			await createExpense(editForm);
+			const expenseId = upload.result?.expense_id;
+			if (expenseId) {
+				await updateExpense(expenseId, editForm);
+			}
 			resetUpload();
 			goto('/expenses');
 		} catch (e: any) {
