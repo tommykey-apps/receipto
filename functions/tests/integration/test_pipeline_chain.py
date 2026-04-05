@@ -171,52 +171,12 @@ class TestPipelineChain:
         assert saver_result["saved"] is True
         assert saver_result["amount"] == 1280
 
-        # Step 5: budget_checker (reads from DynamoDB Local)
-        # First set a budget
-        table.put_item(Item={
-            "pk": f"USER#{user_id}",
-            "sk": f"BDG#{saver_result['month']}#food",
-            "month": saver_result["month"],
-            "category": "food",
-            "amount": 1000,
-            "alert_threshold_pct": 80,
-        })
-
-        mod_checker = _reload_lambda_module("budget_checker")
-        mod_checker.dynamodb = ddb_resource
-        mod_checker.table = ddb_resource.Table(table_name)
-
-        checker_event = {
-            "user_id": user_id,
-            "month": saver_result["month"],
-            "category": "food",
-            "amount": 1280,
-        }
-        checker_result = mod_checker.handler(checker_event, None)
-        assert checker_result["has_budget"] is True
-        assert checker_result["budget_exceeded"] is True  # 1280/1000 = 128%
-
-        # Step 6: notifier (uses SNS, mock it)
-        with mock_aws():
-            sns_client = boto3.client("sns", region_name="ap-northeast-1")
-            resp = sns_client.create_topic(Name="budget-alerts")
-            topic_arn = resp["TopicArn"]
-            os.environ["BUDGET_ALERT_TOPIC_ARN"] = topic_arn
-
-            mod_notifier = _reload_lambda_module("notifier")
-            mod_notifier.sns = sns_client
-            mod_notifier.TOPIC_ARN = topic_arn
-
-            notifier_event = {
-                "user_id": user_id,
-                "month": checker_result["month"],
-                "category": "food",
-                "budget_amount": checker_result["budget_amount"],
-                "current_spent": checker_result["current_spent"],
-                "pct_used": checker_result["pct_used"],
-            }
-            notifier_result = mod_notifier.handler(notifier_event, None)
-            assert notifier_result["notified"] is True
+        # Verify receipt status is completed (OCR results written, no expense created)
+        rcv = table.get_item(
+            Key={"pk": f"USER#{user_id}", "sk": f"RCV#{receipt_id}"}
+        ).get("Item")
+        assert rcv["status"] == "completed"
+        assert int(rcv["amount"]) == 1280
 
     def test_invalid_file_type_stops_pipeline(self, table):
         """Invalid file type: validator returns valid=False."""
@@ -251,14 +211,18 @@ class TestPipelineChain:
         assert result["valid"] is False
         assert "Invalid file" in result["error"]
 
-    def test_ocr_no_amount_saver_returns_not_saved(self, table):
-        """OCR extracts no amount: saver returns saved=False."""
+    def test_ocr_no_amount_saver_marks_failed(self, table):
+        """OCR extracts no amount: saver marks receipt as failed."""
         user_id = "pipeline-user"
         receipt_id = "rcpt-noamt"
         table_name = os.environ["DYNAMODB_TABLE"]
         ddb_resource = _make_dynamodb_resource()
 
-        # OCR returns no amount
+        # Pre-create receipt
+        table.put_item(Item={
+            "pk": f"USER#{user_id}", "sk": f"RCV#{receipt_id}", "status": "processing",
+        })
+
         extracted = {"store_name": "SomeStore", "amount": None, "date": None}
 
         mod_saver = _reload_lambda_module("expense_saver")
@@ -273,7 +237,11 @@ class TestPipelineChain:
         }, None)
 
         assert result["saved"] is False
-        assert "No amount" in result["error"]
+
+        rcv = table.get_item(
+            Key={"pk": f"USER#{user_id}", "sk": f"RCV#{receipt_id}"}
+        ).get("Item")
+        assert rcv["status"] == "failed"
 
     def test_no_budget_set_not_exceeded(self, table):
         """No budget set for category: budget_exceeded=False."""

@@ -114,16 +114,25 @@ class TestCrossLayer:
         assert result["current_spent"] == 2000
         assert result["budget_amount"] == 5000
 
-    def test_lambda_expense_readable_by_api(self, client, table):
-        """Write expense via expense_saver Lambda, read via FastAPI GET."""
+    def test_lambda_ocr_then_api_creates_expense(self, client, table):
+        """Lambda writes OCR result to receipt, API creates expense after user review."""
         table_name = os.environ["DYNAMODB_TABLE"]
         ddb_resource = _make_dynamodb_resource()
+        ddb_table = ddb_resource.Table(table_name)
 
-        # Write via Lambda
+        # Pre-create receipt
+        ddb_table.put_item(Item={
+            "pk": "USER#integration-test-user",
+            "sk": "RCV#rcpt-cross-01",
+            "id": "rcpt-cross-01",
+            "status": "processing",
+        })
+
+        # Lambda writes OCR results to receipt (no expense created)
         _purge_all_modules()
         import expense_saver
         expense_saver.dynamodb = ddb_resource
-        expense_saver.table = ddb_resource.Table(table_name)
+        expense_saver.table = ddb_table
 
         saver_result = expense_saver.handler({
             "user_id": "integration-test-user",
@@ -132,43 +141,23 @@ class TestCrossLayer:
             "category": "food",
         }, None)
         assert saver_result["saved"] is True
-        expense_id = saver_result["expense_id"]
 
-        # Read via API -- client fixture already has mock_aws for S3
+        # No expense yet
         resp = client.get("/api/expenses")
         assert resp.status_code == 200
-        expenses = resp.json()
+        assert len(resp.json()) == 0
 
-        found = [e for e in expenses if e["id"] == expense_id]
-        assert len(found) == 1
-        assert found[0]["amount"] == 350
-        assert found[0]["store_name"] == "ローソン"
+        # User creates expense via API
+        resp = client.post("/api/expenses", json={
+            "store_name": "ローソン", "amount": 350, "category": "food",
+        })
+        assert resp.status_code == 201
+        month = resp.json()["created_at"][:7]
 
-    def test_lambda_writes_summary_api_reads(self, client, table):
-        """Lambda writes expense + summary, API reads summary."""
-        table_name = os.environ["DYNAMODB_TABLE"]
-        ddb_resource = _make_dynamodb_resource()
+        # Expense and summary exist
+        resp = client.get("/api/expenses")
+        assert len(resp.json()) == 1
 
-        # Write via Lambda (expense_saver updates summary)
-        _purge_all_modules()
-        import expense_saver
-        expense_saver.dynamodb = ddb_resource
-        expense_saver.table = ddb_resource.Table(table_name)
-
-        result = expense_saver.handler({
-            "user_id": "integration-test-user",
-            "receipt_id": "rcpt-sum-01",
-            "extracted": {"store_name": "ファミマ", "amount": 780, "date": None},
-            "category": "food",
-        }, None)
-        assert result["saved"] is True
-        month = result["month"]
-
-        # Read summary via API
         resp = client.get(f"/api/summary/monthly?month={month}")
         assert resp.status_code == 200
-        summary = resp.json()
-
-        assert summary["total"] == 780
-        assert summary["by_category"]["food"] == 780
-        assert summary["expense_count"] == 1
+        assert resp.json()["total"] == 350
