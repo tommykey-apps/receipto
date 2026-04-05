@@ -10,6 +10,7 @@ interface UploadState {
 }
 
 const STORAGE_KEY = 'receipt_upload';
+const POLL_TIMEOUT_MS = 30_000;
 
 const initial: UploadState = { receiptId: null, status: 'idle', result: null, error: '' };
 
@@ -34,6 +35,7 @@ function saveToStorage(state: UploadState) {
 
 let state = $state<UploadState>(loadFromStorage());
 let pollTimer: ReturnType<typeof setTimeout> | null = null;
+let pollStartedAt: number | null = null;
 
 export function getUploadState() {
 	return {
@@ -54,20 +56,30 @@ export function setUploading() {
 }
 
 export function startPolling(receiptId: string) {
+	pollStartedAt = Date.now();
 	update({ receiptId, status: 'processing', error: '' });
 	poll(receiptId, 2000);
 }
 
 function poll(receiptId: string, delay: number) {
 	pollTimer = setTimeout(async () => {
+		// Timeout check
+		if (pollStartedAt && Date.now() - pollStartedAt > POLL_TIMEOUT_MS) {
+			update({ status: 'failed', error: '処理がタイムアウトしました。再度お試しください' });
+			pollStartedAt = null;
+			return;
+		}
+
 		try {
 			const receipt = await getReceipt(receiptId);
 			if (receipt.status === 'completed') {
 				update({ status: 'completed', result: receipt });
+				pollStartedAt = null;
 				return;
 			}
 			if (receipt.status === 'failed') {
-				update({ status: 'failed', error: 'OCR処理に失敗しました' });
+				update({ status: 'failed', error: '自動読み取りできませんでした' });
+				pollStartedAt = null;
 				return;
 			}
 		} catch {
@@ -80,6 +92,7 @@ function poll(receiptId: string, delay: number) {
 
 export function resumePollingIfNeeded() {
 	if (state.status === 'processing' && state.receiptId && !pollTimer) {
+		pollStartedAt = Date.now();
 		poll(state.receiptId, 2000);
 	}
 }
@@ -89,6 +102,7 @@ export function resetUpload() {
 		clearTimeout(pollTimer);
 		pollTimer = null;
 	}
+	pollStartedAt = null;
 	Object.assign(state, initial);
 	saveToStorage(state);
 }
