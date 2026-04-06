@@ -74,7 +74,7 @@
 				}
 			},
 			duration: 8000,
-			onAutoClose: async () => {
+			onDismiss: async () => {
 				if (!undone) {
 					await deleteExpense(id);
 				}
