@@ -248,8 +248,6 @@ locals {
     ocr-processor     = { handler = "ocr_processor.handler", timeout = 60 }
     categorizer       = { handler = "categorizer.handler", timeout = 10 }
     expense-saver     = { handler = "expense_saver.handler", timeout = 30 }
-    budget-checker    = { handler = "budget_checker.handler", timeout = 30 }
-    notifier          = { handler = "notifier.handler", timeout = 30 }
   }
 }
 
@@ -270,7 +268,6 @@ resource "aws_lambda_function" "pipeline" {
     variables = {
       DYNAMODB_TABLE         = aws_dynamodb_table.main.name
       BUDGET_ALERT_TOPIC_ARN = aws_sns_topic.alerts.arn
-      RECEIPTS_BUCKET_US     = aws_s3_bucket.receipts_us.id
       BEDROCK_MODEL_ID       = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
     }
   }
