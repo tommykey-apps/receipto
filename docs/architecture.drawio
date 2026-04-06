@@ -66,24 +66,34 @@
           <mxGeometry x="680" y="460" width="540" height="160" as="geometry" />
         </mxCell>
 
-        <!-- Textract -->
-        <mxCell id="textract" value="Bedrock&#xa;(Claude Vision)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.textract;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#1A73E8;fontColor=#000000;strokeColor=#1A73E8;" vertex="1" parent="1">
+        <!-- Arrow: Validator to Bedrock -->
+        <mxCell id="arr_val_ocr" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#666666;" edge="1" source="validator" target="textract" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Validate Lambda -->
+        <mxCell id="validator" value="Lambda&#xa;(Validate)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#ED7100;fontColor=#000000;strokeColor=#ED7100;" vertex="1" parent="1">
           <mxGeometry x="720" y="520" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Bedrock OCR -->
+        <mxCell id="textract" value="Bedrock&#xa;(Claude Vision)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#1A73E8;fontColor=#000000;strokeColor=#1A73E8;" vertex="1" parent="1">
+          <mxGeometry x="850" y="520" width="60" height="60" as="geometry" />
         </mxCell>
 
         <!-- Categorizer Lambda -->
         <mxCell id="categorizer" value="Lambda&#xa;(Categorize)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#ED7100;fontColor=#000000;strokeColor=#ED7100;" vertex="1" parent="1">
-          <mxGeometry x="850" y="520" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <!-- Budget Check Lambda -->
-        <mxCell id="budget_check" value="Lambda&#xa;(Save Result)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#ED7100;fontColor=#000000;strokeColor=#ED7100;" vertex="1" parent="1">
           <mxGeometry x="980" y="520" width="60" height="60" as="geometry" />
         </mxCell>
 
-        <!-- SNS -->
+        <!-- Save Result Lambda -->
+        <mxCell id="budget_check" value="Lambda&#xa;(Save Result)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#ED7100;fontColor=#000000;strokeColor=#ED7100;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="520" width="60" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- SNS (outside pipeline, used by API for budget alerts) -->
         <mxCell id="sns" value="Amazon SNS&#xa;(Budget Alert)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;labelBackgroundColor=none;sketch=0;fontStyle=1;fontSize=10;fillColor=#DD344C;fontColor=#000000;strokeColor=#DD344C;" vertex="1" parent="1">
-          <mxGeometry x="1120" y="520" width="60" height="60" as="geometry" />
+          <mxGeometry x="1120" y="140" width="60" height="60" as="geometry" />
         </mxCell>
 
         <!-- EventBridge -->
@@ -172,7 +182,7 @@
         </mxCell>
 
         <!-- S3 Receipts to Step Functions -->
-        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;strokeColor=#ED7100;" edge="1" source="s3_receipts" target="textract" parent="1">
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;strokeColor=#ED7100;" edge="1" source="s3_receipts" target="validator" parent="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="930" y="420" />
@@ -194,11 +204,11 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Budget Check to SNS -->
-        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;strokeColor=#DD344C;dashed=1;" edge="1" source="budget_check" target="sns" parent="1">
+        <!-- Lambda API to SNS (budget alert via API) -->
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeWidth=2;strokeColor=#DD344C;dashed=1;" edge="1" source="lambda_api" target="sns" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e10_label" value="" style="edgeLabel;html=1;fontSize=9;fontStyle=2;" vertex="1" connectable="0" parent="e10">
+        <mxCell id="e10_label" value="Budget Alert" style="edgeLabel;html=1;fontSize=9;fontStyle=2;" vertex="1" connectable="0" parent="e10">
           <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
         </mxCell>
 
