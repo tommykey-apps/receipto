@@ -117,7 +117,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e_r53_label" value="DNS" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e_r53">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- User to CloudFront -->
@@ -125,7 +125,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e1_label" value="HTTPS" style="edgeLabel;html=1;fontSize=10;fontStyle=0;" vertex="1" connectable="0" parent="e1">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- CloudFront to S3 Frontend -->
@@ -133,7 +133,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e2_label" value="/* static&#xa;via OAC" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e2">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- CloudFront to API Gateway -->
@@ -141,7 +141,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e3_label" value="/api/*" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e3">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- API Gateway to Cognito -->
@@ -149,7 +149,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e_cognito_label" value="JWT Verify" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e_cognito">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- ACM to CloudFront -->
@@ -157,7 +157,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e_acm_label" value="SSL" style="edgeLabel;html=1;fontSize=9;fontStyle=2;" vertex="1" connectable="0" parent="e_acm">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- API Gateway to Lambda API -->
@@ -170,7 +170,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e5_label" value="CRUD" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e5">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- Lambda API to S3 Receipts -->
@@ -178,7 +178,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e6_label" value="Presigned URL" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e6">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- S3 Receipts to Step Functions -->
@@ -191,7 +191,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="e7_label" value="S3 Event&#xa;→ Step Functions" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e7">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- Textract to Categorizer -->
@@ -209,7 +209,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e10_label" value="Budget Alert" style="edgeLabel;html=1;fontSize=9;fontStyle=2;" vertex="1" connectable="0" parent="e10">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- EventBridge to Digest Lambda -->
@@ -217,7 +217,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e11_label" value="Weekly Mon 9:00 JST" style="edgeLabel;html=1;fontSize=9;fontStyle=2;" vertex="1" connectable="0" parent="e11">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- Digest Lambda to DynamoDB -->
@@ -230,7 +230,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="e12_label" value="Query" style="edgeLabel;html=1;fontSize=9;fontStyle=2;" vertex="1" connectable="0" parent="e12">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- Digest Lambda to SES -->
@@ -238,7 +238,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e13_label" value="Email Digest" style="edgeLabel;html=1;fontSize=9;fontStyle=0;" vertex="1" connectable="0" parent="e13">
-          <mxGeometry relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+          <mxGeometry relative="1" as="geometry"><mxPoint x="0" y="-15" as="offset" /></mxGeometry>
         </mxCell>
 
         <!-- Legend -->
