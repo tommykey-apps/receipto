@@ -87,7 +87,7 @@ jobs:
 
       - name: Deploy Pipeline Lambdas
         run: |
-          for fn in receipt-validator ocr-processor categorizer expense-saver budget-checker notifier; do
+          for fn in receipt-validator ocr-processor categorizer expense-saver; do
             aws lambda update-function-code \
               --function-name expense-tracker-$fn \
               --zip-file fileb://functions/pipeline.zip
