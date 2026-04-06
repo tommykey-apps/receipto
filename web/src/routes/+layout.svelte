@@ -28,7 +28,7 @@
 	});
 </script>
 
-<Toaster />
+<Toaster position="top-center" />
 
 <svelte:head>
 	<title>Receipto</title>
