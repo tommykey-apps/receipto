@@ -28,14 +28,14 @@
 
 | サービス | 何してるか |
 |---------|-----------|
-| Lambda | Python API + OCRパイプライン(6関数) + 週次ダイジェスト生成 |
+| Lambda | Python API + OCRパイプライン(4関数) + 週次ダイジェスト生成 |
 | API Gateway | HTTPリクエストをLambdaにルーティング + Cognito JWT認証 |
 | DynamoDB | 支出・レシート・カテゴリ・予算・月次集計の保存 |
 | S3 | レシート画像 + フロントのビルド成果物 + Terraform state |
 | CloudFront | CDN。S3とAPI Gatewayの前に立ってHTTPS配信 |
 | Cognito | ユーザー登録、ログイン、JWT発行 (マルチユーザー対応) |
 | Bedrock | Claude Visionでレシート画像からOCR（金額・店名・日付を構造化JSON抽出） |
-| Step Functions | レシートアップロード → OCR → 分類 → 保存 → 予算チェックのワークフロー |
+| Step Functions | レシートアップロード → OCR → 分類 → レシートに結果保存のワークフロー |
 | SNS | 予算超過時のメール通知 |
 | SES | 週次ダイジェストメール送信 |
 | EventBridge | S3アップロード→Step Functions起動 + 毎週月曜にダイジェスト生成 |
@@ -48,6 +48,9 @@
 - ユーザー認証（サインアップ、ログイン、JWT）
 - レシート撮影 → Claude Vision OCR自動解析（金額・店名・日付）
 - HEIC画像の自動JPEG変換（iPhone対応）
+- 画像自動圧縮（2048px/1MB、5MB超対応）
+- アップロードプログレスバー + キャンセル
+- OCR失敗時の手動入力フォールバック
 - 支出の手動登録・削除（Undoトースト付き）
 - カテゴリ自動分類（ルールベース）
 - カテゴリ別予算設定 + 消化率プログレスバー
