@@ -1,0 +1,47 @@
+{
+  "name": "Amazon DynamoDB (ap-northeast-1)",
+  "tables": [
+    {
+      "name": "expense-tracker",
+      "type": "BASIC TABLE",
+      "comment": "Single-table design. 6 logical entities (User / Expense / Receipt / Category /\nBudget / MonthlySummary) are stored under different SK prefixes.\nSee ../entities.md and ../access-patterns.md for full attribute definitions\n(tbls cannot infer non-key attributes from DynamoDB).\n",
+      "columns": [
+        {
+          "name": "pk",
+          "type": "S",
+          "nullable": false,
+          "comment": "Partition key. Always `USER#{cognito_sub}` — every item belongs to exactly one user.\n"
+        },
+        {
+          "name": "sk",
+          "type": "S",
+          "nullable": false,
+          "comment": "Sort key. Prefix determines the entity type:\n  EXP#{ISO8601}#{id}        Expense\n  RCV#{id}                  Receipt\n  CAT#{name}                Category\n  BDG#{YYYY-MM}#{category}  Budget\n  SUM#{YYYY-MM}             MonthlySummary\n"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "Primary Key",
+          "type": "Partition key and sort key",
+          "def": "[{ AttributeName: \"pk\", KeyType: \"HASH\" } { AttributeName: \"sk\", KeyType: \"RANGE\" }]",
+          "table": null,
+          "columns": [
+            "pk",
+            "sk"
+          ]
+        }
+      ]
+    }
+  ],
+  "driver": {
+    "name": "dynamodb",
+    "meta": {
+      "dict": {
+        "Column": "Attribute",
+        "Columns": "Attributes",
+        "Constraints": "Primary Key",
+        "Indexes": "Secondary Indexes"
+      }
+    }
+  }
+}

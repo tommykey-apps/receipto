@@ -1,4 +1,4 @@
-.PHONY: help dev db db-admin api web test test-unit test-integration docs clean
+.PHONY: help dev db db-admin api web test test-unit test-integration docs db-docs db-docs-diff clean
 
 -include .env
 export
@@ -49,6 +49,33 @@ docs: ## Generate OpenAPI spec and serve docs (http://localhost:9090)
 	cd api && .venv/bin/python generate_openapi.py ../docs/openapi.json
 	@echo "  Serving docs at http://localhost:9090"
 	cd docs && python3 -m http.server 9090
+
+# ── DB Docs ──
+
+TBLS_VERSION := v1.94.5
+TBLS := $(PWD)/bin/tbls
+TBLS_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+TBLS_ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+
+$(TBLS):
+	@mkdir -p $(PWD)/bin
+	curl -sSL "https://github.com/k1LoW/tbls/releases/download/$(TBLS_VERSION)/tbls_$(TBLS_VERSION)_$(TBLS_OS)_$(TBLS_ARCH).tar.gz" \
+		| tar -xz -C $(PWD)/bin tbls
+	@chmod +x $(TBLS)
+
+db-docs: db $(TBLS) ## Generate DynamoDB schema docs (docs-db/schema/)
+	@AWS_ENDPOINT_URL=http://localhost:8000 \
+		AWS_DEFAULT_REGION=ap-northeast-1 \
+		AWS_ACCESS_KEY_ID=local \
+		AWS_SECRET_ACCESS_KEY=local \
+		$(TBLS) doc --force
+
+db-docs-diff: db $(TBLS) ## Show diff between docs-db/schema/ and live DynamoDB Local
+	@AWS_ENDPOINT_URL=http://localhost:8000 \
+		AWS_DEFAULT_REGION=ap-northeast-1 \
+		AWS_ACCESS_KEY_ID=local \
+		AWS_SECRET_ACCESS_KEY=local \
+		$(TBLS) diff
 
 # ── Cleanup ──
 
