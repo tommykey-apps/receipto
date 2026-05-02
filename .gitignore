@@ -30,3 +30,6 @@ terraform.tfvars
 
 # Environment
 .env
+
+# Local tool binaries (tbls, etc.)
+bin/

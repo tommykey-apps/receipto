@@ -13,6 +13,8 @@ services:
       retries: 10
       start_period: 5s
 
+  # NOTE: 同じ create-table 定義が .github/workflows/db-docs.yaml の
+  # `Create table` ステップにもある。片方を変更したら必ず両方を同期すること。
   dynamodb-init:
     image: amazon/aws-cli:latest
     depends_on:

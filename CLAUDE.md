@@ -75,6 +75,8 @@ SNS_TOPIC_ARN, SES_FROM_EMAIL
 
 PK: `USER#{cognito_sub}`, SK: `EXP#`, `RCV#`, `CAT#`, `BDG#`, `SUM#`
 
+詳細: [docs-db/entities.md](docs-db/entities.md), [docs-db/access-patterns.md](docs-db/access-patterns.md)
+
 ## AWS構成
 
 - ドメイン: expense.tommykeyapp.com
