@@ -38,9 +38,23 @@ jobs:
           AWS_SECRET_ACCESS_KEY: dummy
           AWS_DEFAULT_REGION: ap-northeast-1
 
-      - uses: actions/upload-pages-artifact@v3
+      # Jekyll で docs/db/ を HTML 化 (tbls 出力 Markdown と手書き補足を Pages 上で読める形に)
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
         with:
-          path: docs
+          source: ./docs/db
+          destination: ./_jekyll_db
+
+      # 既存 docs/ (Swagger UI + openapi.json + architecture.*) と Jekyll 出力をマージ
+      - name: Merge Pages content
+        run: |
+          mkdir -p _site
+          cp -r docs/. _site/
+          rm -rf _site/db
+          cp -r _jekyll_db _site/db
+
+      - uses: actions/upload-pages-artifact@v3
+        # path はデフォルト ./_site
 
   deploy:
     needs: build
