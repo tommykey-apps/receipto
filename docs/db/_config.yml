@@ -2,3 +2,11 @@ title: Receipto DB Schema
 description: tbls 自動生成 + 手書き補足 (DynamoDB シングルテーブル設計)
 theme: jekyll-theme-cayman
 markdown: kramdown
+
+# .md リンクを Jekyll ビルド時に .html に自動変換 (GitHub UI 上でも .md として動くまま、Pages でも 200)
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
