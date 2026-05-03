@@ -7,26 +7,26 @@
 
 | # | Use case | API | PK | SK condition | Filter | Source |
 |---|---|---|---|---|---|---|
-| 1 | 支出一覧 (全期間) | `GET /api/expenses` | `USER#{u}` | `begins_with(EXP#)` | - | [dynamodb.py:54](../api/store/dynamodb.py#L54) |
-| 2 | 支出一覧 (月指定) | `GET /api/expenses?month=YYYY-MM` | `USER#{u}` | `begins_with(EXP#YYYY-MM)` | - | [dynamodb.py:54](../api/store/dynamodb.py#L54) |
-| 3 | 支出一覧 (カテゴリ絞り込み) | `GET /api/expenses?category=X` | `USER#{u}` | `begins_with(EXP#)` | post-filter (Python 側) | [dynamodb.py:67](../api/store/dynamodb.py#L67) |
-| 4 | 支出取得 (id 指定) | `GET /api/expenses/{id}` | `USER#{u}` | `begins_with(EXP#)` | `id == X` (DDB FilterExpression) | [dynamodb.py:70](../api/store/dynamodb.py#L70) |
-| 5 | 支出更新 / 削除 | `PUT/DELETE /api/expenses/{id}` | `USER#{u}` | (#4 で SK を解決して直接指定) | - | [dynamodb.py:93](../api/store/dynamodb.py#L93), [dynamodb.py:118](../api/store/dynamodb.py#L118) |
-| 6 | レシート取得 | `GET /api/receipts/{id}` | `USER#{u}` | `RCV#{id}` (eq) | - | [dynamodb.py:144](../api/store/dynamodb.py#L144) |
-| 7 | カテゴリ一覧 | `GET /api/categories` | `USER#{u}` | `begins_with(CAT#)` | - | [dynamodb.py:152](../api/store/dynamodb.py#L152) |
-| 8 | 予算一覧 (月指定) | `GET /api/budgets?month=YYYY-MM` | `USER#{u}` | `begins_with(BDG#YYYY-MM)` | - | [dynamodb.py:191](../api/store/dynamodb.py#L191) |
-| 9 | 月次集計取得 | `GET /api/summary/monthly?month=YYYY-MM` | `USER#{u}` | `SUM#{YYYY-MM}` (eq) | - | [dynamodb.py:213](../api/store/dynamodb.py#L213) |
-| 10 | 月次集計の原子的加算 | (内部、支出登録時) | `USER#{u}` | `SUM#{YYYY-MM}` | - | [dynamodb.py:219](../api/store/dynamodb.py#L219) |
+| 1 | 支出一覧 (全期間) | `GET /api/expenses` | `USER#{u}` | `begins_with(EXP#)` | - | [dynamodb.py:54](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L54) |
+| 2 | 支出一覧 (月指定) | `GET /api/expenses?month=YYYY-MM` | `USER#{u}` | `begins_with(EXP#YYYY-MM)` | - | [dynamodb.py:54](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L54) |
+| 3 | 支出一覧 (カテゴリ絞り込み) | `GET /api/expenses?category=X` | `USER#{u}` | `begins_with(EXP#)` | post-filter (Python 側) | [dynamodb.py:67](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L67) |
+| 4 | 支出取得 (id 指定) | `GET /api/expenses/{id}` | `USER#{u}` | `begins_with(EXP#)` | `id == X` (DDB FilterExpression) | [dynamodb.py:70](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L70) |
+| 5 | 支出更新 / 削除 | `PUT/DELETE /api/expenses/{id}` | `USER#{u}` | (#4 で SK を解決して直接指定) | - | [dynamodb.py:93](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L93), [dynamodb.py:118](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L118) |
+| 6 | レシート取得 | `GET /api/receipts/{id}` | `USER#{u}` | `RCV#{id}` (eq) | - | [dynamodb.py:144](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L144) |
+| 7 | カテゴリ一覧 | `GET /api/categories` | `USER#{u}` | `begins_with(CAT#)` | - | [dynamodb.py:152](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L152) |
+| 8 | 予算一覧 (月指定) | `GET /api/budgets?month=YYYY-MM` | `USER#{u}` | `begins_with(BDG#YYYY-MM)` | - | [dynamodb.py:191](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L191) |
+| 9 | 月次集計取得 | `GET /api/summary/monthly?month=YYYY-MM` | `USER#{u}` | `SUM#{YYYY-MM}` (eq) | - | [dynamodb.py:213](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L213) |
+| 10 | 月次集計の原子的加算 | (内部、支出登録時) | `USER#{u}` | `SUM#{YYYY-MM}` | - | [dynamodb.py:219](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L219) |
 
 ## ScanIndexForward
 
 支出一覧 (#1, #2) は `ScanIndexForward=False` で SK 降順 = **時系列逆順** を返す
-([dynamodb.py:63](../api/store/dynamodb.py#L63))。これは SK に ISO8601 timestamp を含める設計が前提。
+([dynamodb.py:63](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L63))。これは SK に ISO8601 timestamp を含める設計が前提。
 
 ## Anti-patterns / Known concerns
 
 ### A1. Expense の id 指定取得が O(n)
-`get_expense` / `update_expense` / `delete_expense` ([dynamodb.py:70-125](../api/store/dynamodb.py#L70))
+`get_expense` / `update_expense` / `delete_expense` ([dynamodb.py:70-125](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L70))
 は SK に timestamp が含まれるため、id だけからは SK を再構築できない。よって `begins_with(EXP#)`
 でユーザー全期間の支出を Query した上で `FilterExpression` で id 一致を探す。
 
@@ -36,7 +36,7 @@
   で参照可能なエイリアス item を別 SK で複製する
 
 ### A2. カテゴリフィルタが post-filter
-`get_expenses(..., category=X)` ([dynamodb.py:67](../api/store/dynamodb.py#L67)) は Query 段階では
+`get_expenses(..., category=X)` ([dynamodb.py:67](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L67)) は Query 段階では
 カテゴリで絞れず、Python 側で filter している。Query で読んだ全件分の RCU を消費する。
 
 - 影響: A1 と同じく件数増で顕在化
@@ -44,7 +44,7 @@
   GSI を貼る。ただし時系列ソートとの両立が難しい
 
 ### A3. MonthlySummary の 2段階更新
-`update_monthly_summary` ([dynamodb.py:225-259](../api/store/dynamodb.py#L225)) は
+`update_monthly_summary` ([dynamodb.py:225-259](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L225)) は
 `UpdateExpression` でマップ要素を加算するが、`by_category` 自体が存在しない初回は
 DynamoDB が `ValidationException` を投げる (`if_not_exists` はマップの**サブパス**には効かない)。
 `ClientError` で例外を捕捉して `put_item` でフォールバックしている。
@@ -56,7 +56,7 @@ DynamoDB が `ValidationException` を投げる (`if_not_exists` はマップの
   `ConditionExpression` で `attribute_not_exists(by_category)` の `put_item` にする
 
 ### A4. decrement_monthly_summary の例外握り潰し
-`decrement_monthly_summary` ([dynamodb.py:284](../api/store/dynamodb.py#L284)) は `Exception: pass`
+`decrement_monthly_summary` ([dynamodb.py:284](https://github.com/tommykey-apps/receipto/blob/main/api/store/dynamodb.py#L284)) は `Exception: pass`
 でエラーを完全に捨てる。サマリ未存在時 / 既に 0 のときは正常だが、それ以外 (ネットワーク
 エラー、IAM 権限不足等) も握り潰される。
 
