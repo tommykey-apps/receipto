@@ -5,11 +5,11 @@
 # 併用すること。Makefile の `db-docs` ターゲット経由で実行するのが正規の手順。
 #
 # `tbls doc` を素手で打つと AWS 本番に誤接続する可能性があるため、必ず `make db-docs`
-# を使うこと。詳細は docs-db/README.md。
+# を使うこと。詳細は docs/db/README.md。
 
 dsn: dynamo://ap-northeast-1?aws_access_key_id=local&aws_secret_access_key=local
 
-docPath: docs-db/schema
+docPath: docs/db/schema
 
 format:
   adjust: true
@@ -21,7 +21,7 @@ include:
 # tbls の DynamoDB driver は DescribeTable の AttributeDefinitions しかカラム化しない。
 # このテーブルは pk と sk の2属性しか宣言されていないため、自動生成されるカラム表は
 # 2行だけになる。実アイテムの属性 (amount, category, created_at 等) は出力されない。
-# よって意味のある補足は以下の comments と、docs-db/entities.md / access-patterns.md
+# よって意味のある補足は以下の comments と、docs/db/entities.md / access-patterns.md
 # (手書き) に書く。
 comments:
   - table: expense-tracker

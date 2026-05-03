@@ -11,7 +11,7 @@
 ## ドキュメント生成
 
 ```bash
-make db-docs        # DynamoDB Local 起動 + tbls 実行 + docs-db/schema/ 再生成
+make db-docs        # DynamoDB Local 起動 + tbls 実行 + docs/db/schema/ 再生成
 make db-docs-diff   # 現状の docs と live スキーマの差分表示
 ```
 
